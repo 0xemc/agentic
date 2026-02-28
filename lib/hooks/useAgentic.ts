@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AgenticManager } from '../core/manager';
 import { AgentContext, AgentMessage } from '../core/types';
+import { useSSE } from './useSSE';
 
 let managerInstance: AgenticManager | null = null;
 
@@ -150,51 +151,26 @@ export function useAgentContext(contextId: string | null) {
   }, [loadMessages]);
 
   // Subscribe to SSE for real-time updates
-  useEffect(() => {
-    if (!contextId) return;
+  useSSE({
+    url: `/api/agents/${contextId}/stream`,
+    enabled: !!contextId,
+    onMessage: (data) => {
+      if (data.type === 'message') {
+        const newMessage = {
+          ...data.message,
+          timestamp: new Date(data.message.timestamp)
+        };
 
-    console.log('[useAgentContext] Connecting to SSE stream for:', contextId);
-
-    const eventSource = new EventSource(`/api/agents/${contextId}/stream`);
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('[useAgentContext] SSE message received:', data);
-
-        if (data.type === 'message') {
-          const newMessage = {
-            ...data.message,
-            timestamp: new Date(data.message.timestamp)
-          };
-
-          setMessages((prev) => {
-            // Avoid duplicates
-            if (prev.some((m) => m.id === newMessage.id)) {
-              console.log('[useAgentContext] Duplicate message, skipping:', newMessage.id);
-              return prev;
-            }
-            console.log('[useAgentContext] Adding new message to state:', newMessage.id);
-            return [...prev, newMessage];
-          });
-        } else if (data.type === 'connected') {
-          console.log('[useAgentContext] SSE connected');
-        }
-      } catch (error) {
-        console.error('[useAgentContext] Error parsing SSE message:', error);
+        setMessages((prev) => {
+          // Avoid duplicates
+          if (prev.some((m) => m.id === newMessage.id)) {
+            return prev;
+          }
+          return [...prev, newMessage];
+        });
       }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error('[useAgentContext] SSE error:', error);
-      eventSource.close();
-    };
-
-    return () => {
-      console.log('[useAgentContext] Closing SSE connection for:', contextId);
-      eventSource.close();
-    };
-  }, [contextId]);
+    }
+  });
 
   return {
     messages,

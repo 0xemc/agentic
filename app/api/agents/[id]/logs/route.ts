@@ -15,6 +15,14 @@ export async function GET(
     const groupsBasePath = process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups';
     const logsPath = path.join(groupsBasePath, id, 'logs');
 
+    // Check if logs directory exists
+    try {
+      await fs.access(logsPath);
+    } catch {
+      // Logs directory doesn't exist yet - return empty
+      return NextResponse.json({ lines: [], latest: null });
+    }
+
     // Get all log files
     const files = await fs.readdir(logsPath);
     const logFiles = files

@@ -4,7 +4,8 @@ import { Agent } from '@/types/agent';
 import { Card } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
 import { Activity, Clock, MessageSquare, AlertCircle, Pause, Power, Terminal } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useSSE } from '@/lib/hooks/useSSE';
 
 interface AgentCardProps {
   agent: Agent;
@@ -52,24 +53,18 @@ export function AgentCard({ agent, onClick, index = 0 }: AgentCardProps) {
   const StatusIcon = status.icon;
   const [logLines, setLogLines] = useState<string[]>([]);
 
-  // Poll for log updates every 2 seconds
-  useEffect(() => {
-    const fetchLogs = async () => {
-      try {
-        const response = await fetch(`/api/agents/${agent.id}/logs?lines=3`);
-        if (response.ok) {
-          const data = await response.json();
-          setLogLines(data.lines || []);
-        }
-      } catch (error) {
-        // Silently fail - logs are optional
+  // Subscribe to SSE for real-time log updates
+  useSSE({
+    url: `/api/agents/${agent.id}/logs/stream`,
+    onMessage: (data) => {
+      if (data.type === 'logs') {
+        setLogLines(data.lines || []);
       }
-    };
-
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 2000);
-    return () => clearInterval(interval);
-  }, [agent.id]);
+    },
+    onError: () => {
+      // Silently fail - logs are optional
+    }
+  });
 
   return (
     <Card
