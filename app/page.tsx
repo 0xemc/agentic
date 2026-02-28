@@ -1,22 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Agent, Message } from '@/types/agent';
 import { AgentGrid } from '@/components/agent-grid';
-import { AgentDialog } from '@/components/agent-dialog';
+import { AgentSidebar } from '@/components/agent-sidebar';
 import { useAgentic, useAgentContext } from '@/lib/hooks/useAgentic';
 import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
+  const router = useRouter();
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const { contexts, loading, error, manager } = useAgentic();
   const { messages, sendMessage } = useAgentContext(selectedAgent?.id || null);
 
+  // Detect mobile/desktop
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleAgentClick = (agent: Agent) => {
-    setSelectedAgent(agent);
+    if (isMobile) {
+      // Navigate to dedicated page on mobile
+      router.push(`/agent/${agent.id}`);
+    } else {
+      // Open sidebar on desktop
+      setSelectedAgent(agent);
+    }
   };
 
-  const handleCloseDialog = () => {
+  const handleCloseSidebar = () => {
     setSelectedAgent(null);
   };
 
@@ -93,11 +113,12 @@ export default function Home() {
         )}
       </main>
 
-      <AgentDialog
+      {/* Desktop: Sidebar */}
+      <AgentSidebar
         agent={selectedAgent}
         messages={dialogMessages}
-        open={!!selectedAgent}
-        onClose={handleCloseDialog}
+        open={!!selectedAgent && !isMobile}
+        onClose={handleCloseSidebar}
         onSendMessage={handleSendMessage}
       />
     </div>
