@@ -107,9 +107,16 @@ export function useAgentContext(contextId: string | null) {
       try {
         const message = await manager.sendMessage(contextId, content);
 
-        // Reload messages to ensure we have the latest from the database
-        // Don't add message optimistically - just reload to avoid duplicates
-        setTimeout(() => loadMessages(), 500);
+        // Add message optimistically for immediate display
+        if (message) {
+          setMessages((prev) => {
+            // Avoid duplicates
+            if (prev.some((m) => m.id === message.id)) {
+              return prev;
+            }
+            return [...prev, message];
+          });
+        }
 
         return message;
       } catch (err) {
@@ -117,7 +124,7 @@ export function useAgentContext(contextId: string | null) {
         return null;
       }
     },
-    [manager, contextId, loadMessages]
+    [manager, contextId]
   );
 
   // Subscribe to new messages

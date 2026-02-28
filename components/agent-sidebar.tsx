@@ -91,9 +91,14 @@ export function AgentSidebar({
 
       // Only auto-scroll if initial render or user is already near bottom
       if (isInitialRender.current || isNearBottom) {
-        messagesEndRef.current.scrollIntoView({
-          behavior: isInitialRender.current ? 'instant' : 'smooth'
-        });
+        // Small delay to ensure DOM has updated with new message
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({
+              behavior: isInitialRender.current ? 'instant' : 'smooth'
+            });
+          }
+        }, 0);
       }
 
       isInitialRender.current = false;
