@@ -82,13 +82,23 @@ export function AgentSidebar({
 
   useEffect(() => {
     if (open && messagesEndRef.current && !isLoadingMore) {
-      // Instant scroll on initial render, smooth scroll on new messages
-      messagesEndRef.current.scrollIntoView({
-        behavior: isInitialRender.current ? 'instant' : 'smooth'
-      });
+      const scrollContainer = scrollContainerRef.current;
+
+      // Check if user is near the bottom (within 100px)
+      const isNearBottom = scrollContainer
+        ? scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 100
+        : true;
+
+      // Only auto-scroll if initial render or user is already near bottom
+      if (isInitialRender.current || isNearBottom) {
+        messagesEndRef.current.scrollIntoView({
+          behavior: isInitialRender.current ? 'instant' : 'smooth'
+        });
+      }
+
       isInitialRender.current = false;
     }
-  }, [displayMessages.length, open, isLoadingMore]);
+  }, [messages, open, isLoadingMore]);
 
   // Reset initial render flag when sidebar closes
   useEffect(() => {

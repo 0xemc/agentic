@@ -35,13 +35,23 @@ export default function AgentPage() {
   // Auto-scroll to bottom when messages change or initially load
   useEffect(() => {
     if (messagesEndRef.current && !isLoadingMore) {
-      // Instant scroll on initial render, smooth scroll on new messages
-      messagesEndRef.current.scrollIntoView({
-        behavior: isInitialRender.current ? 'instant' : 'smooth'
-      });
+      const scrollContainer = scrollContainerRef.current;
+
+      // Check if user is near the bottom (within 100px)
+      const isNearBottom = scrollContainer
+        ? scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 100
+        : true;
+
+      // Only auto-scroll if initial render or user is already near bottom
+      if (isInitialRender.current || isNearBottom) {
+        messagesEndRef.current.scrollIntoView({
+          behavior: isInitialRender.current ? 'instant' : 'smooth'
+        });
+      }
+
       isInitialRender.current = false;
     }
-  }, [displayMessages.length, isLoadingMore]);
+  }, [messages, isLoadingMore]);
 
   // Handle scroll to load more messages
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {

@@ -47,10 +47,16 @@ export class NanoClawAdapter implements AgenticAdapter {
   async connect(): Promise<void> {
     // Verify database exists
     try {
+      console.log('[NanoClawAdapter] Attempting to connect to database:', this.config.databasePath);
       await fs.access(this.config.databasePath!);
+      console.log('[NanoClawAdapter] Database file exists, creating DB instance');
       this.db = new NanoClawDB(this.config.databasePath!);
+      console.log('[NanoClawAdapter] Successfully connected to database');
     } catch (error) {
-      throw new Error(`NanoClaw database not found: ${this.config.databasePath}`);
+      console.error('[NanoClawAdapter] Failed to connect to database:', error);
+      console.error('[NanoClawAdapter] Database path attempted:', this.config.databasePath);
+      console.error('[NanoClawAdapter] Error details:', error instanceof Error ? error.message : String(error));
+      throw new Error(`NanoClaw database not found: ${this.config.databasePath} (${error instanceof Error ? error.message : String(error)})`);
     }
 
     this.connected = true;

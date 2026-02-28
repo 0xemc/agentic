@@ -142,6 +142,53 @@ export function useAgentContext(contextId: string | null) {
     loadMessages();
   }, [loadMessages]);
 
+  // Subscribe to SSE for real-time updates
+  useEffect(() => {
+    if (!contextId) return;
+
+    console.log('[useAgentContext] Connecting to SSE stream for:', contextId);
+
+    const eventSource = new EventSource(`/api/agents/${contextId}/stream`);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('[useAgentContext] SSE message received:', data);
+
+        if (data.type === 'message') {
+          const newMessage = {
+            ...data.message,
+            timestamp: new Date(data.message.timestamp)
+          };
+
+          setMessages((prev) => {
+            // Avoid duplicates
+            if (prev.some((m) => m.id === newMessage.id)) {
+              console.log('[useAgentContext] Duplicate message, skipping:', newMessage.id);
+              return prev;
+            }
+            console.log('[useAgentContext] Adding new message to state:', newMessage.id);
+            return [...prev, newMessage];
+          });
+        } else if (data.type === 'connected') {
+          console.log('[useAgentContext] SSE connected');
+        }
+      } catch (error) {
+        console.error('[useAgentContext] Error parsing SSE message:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('[useAgentContext] SSE error:', error);
+      eventSource.close();
+    };
+
+    return () => {
+      console.log('[useAgentContext] Closing SSE connection for:', contextId);
+      eventSource.close();
+    };
+  }, [contextId]);
+
   return {
     messages,
     loading,
