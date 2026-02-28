@@ -66,7 +66,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)] dark:shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
                 <h1 className="text-2xl font-bold tracking-tight">
                   AGENTIC <span className="text-muted-foreground font-mono text-lg">/ MISSION CONTROL</span>
                 </h1>

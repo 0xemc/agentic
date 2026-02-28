@@ -14,33 +14,33 @@ interface AgentCardProps {
 const statusConfig = {
   active: {
     icon: Activity,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-500/10',
-    border: 'border-emerald-500/20',
+    color: 'text-emerald-400 dark:text-emerald-300',
+    bg: 'bg-emerald-500/10 dark:bg-emerald-400/20',
+    border: 'border-emerald-500/20 dark:border-emerald-400/30',
     pulse: 'animate-pulse',
     label: 'ACTIVE'
   },
   idle: {
     icon: Pause,
-    color: 'text-amber-500',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/20',
+    color: 'text-amber-500 dark:text-yellow-300',
+    bg: 'bg-amber-500/10 dark:bg-yellow-400/20',
+    border: 'border-amber-500/20 dark:border-yellow-400/30',
     pulse: '',
     label: 'IDLE'
   },
   error: {
     icon: AlertCircle,
-    color: 'text-red-500',
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/20',
+    color: 'text-red-500 dark:text-red-400',
+    bg: 'bg-red-500/10 dark:bg-red-500/20',
+    border: 'border-red-500/20 dark:border-red-500/30',
     pulse: '',
     label: 'ERROR'
   },
   offline: {
     icon: Power,
-    color: 'text-gray-500',
-    bg: 'bg-gray-500/10',
-    border: 'border-gray-500/20',
+    color: 'text-gray-500 dark:text-gray-400',
+    bg: 'bg-gray-500/10 dark:bg-gray-500/20',
+    border: 'border-gray-500/20 dark:border-gray-500/30',
     pulse: '',
     label: 'OFFLINE'
   },
