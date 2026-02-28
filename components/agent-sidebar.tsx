@@ -61,9 +61,9 @@ export function AgentSidebar({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [width, setWidth] = useState(() => {
     if (typeof window !== 'undefined') {
-      return Math.floor(window.innerWidth * 0.4);
+      return Math.floor(window.innerWidth * 0.25);
     }
-    return 540;
+    return 450;
   });
   const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -166,16 +166,19 @@ export function AgentSidebar({
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="p-0 flex flex-col border-l-2 !w-auto !max-w-none"
-        style={{ width: `${width}px`, maxWidth: '100vw' }}
+        className="p-0 gap-0 border-l-2"
+        data-resizable="true"
+        style={{
+          '--sheet-width': `${width}px`
+        } as React.CSSProperties}
       >
         {/* Resize Handle */}
         <div
           onMouseDown={handleMouseDown}
-          className="absolute left-0 top-0 bottom-0 w-4 -ml-2 cursor-ew-resize hover:bg-primary/10 transition-colors z-[60] group flex items-center justify-center"
+          className="absolute left-0 top-0 bottom-0 w-6 -ml-3 cursor-ew-resize z-[100] group flex items-center justify-center"
           style={{ touchAction: 'none' }}
         >
-          <div className="w-1 h-20 bg-border/40 group-hover:bg-primary/70 rounded-full transition-all" />
+          <div className="w-1.5 h-24 bg-primary/30 group-hover:bg-primary group-hover:w-2 rounded-full transition-all shadow-sm" />
         </div>
         {/* Header */}
         <div className="p-6 border-b bg-muted/20">

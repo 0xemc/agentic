@@ -210,3 +210,10 @@
     transform: translateX(0);
   }
 }
+
+/* Resizable sidebar */
+[data-slot="sheet-content"][data-resizable="true"] {
+  width: var(--sheet-width) !important;
+  max-width: 90vw !important;
+  min-width: 350px !important;
+}
