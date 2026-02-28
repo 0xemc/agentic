@@ -7,6 +7,7 @@ import { AgentGrid } from '@/components/agent-grid';
 import { AgentSidebar } from '@/components/agent-sidebar';
 import { useAgentic, useAgentContext } from '@/lib/hooks/useAgentic';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Home() {
   const router = useRouter();
@@ -74,25 +75,28 @@ export default function Home() {
                 Framework-Agnostic Agent Management System
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
-                Adapters
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                  Adapters
+                </div>
+                <div className="flex gap-2">
+                  {adapters.map((adapter, index) => (
+                    <div
+                      key={adapter.name}
+                      className="px-3 py-1.5 rounded-md bg-primary/10 border border-primary/20 font-mono text-xs font-bold uppercase tracking-wide text-primary"
+                      style={{
+                        animationDelay: `${index * 100}ms`,
+                        animation: 'slideInRight 0.5s ease-out forwards',
+                        opacity: 0,
+                      }}
+                    >
+                      {adapter.name}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-2">
-                {adapters.map((adapter, index) => (
-                  <div
-                    key={adapter.name}
-                    className="px-3 py-1.5 rounded-md bg-primary/10 border border-primary/20 font-mono text-xs font-bold uppercase tracking-wide text-primary"
-                    style={{
-                      animationDelay: `${index * 100}ms`,
-                      animation: 'slideInRight 0.5s ease-out forwards',
-                      opacity: 0,
-                    }}
-                  >
-                    {adapter.name}
-                  </div>
-                ))}
-              </div>
+              <ThemeToggle />
             </div>
           </div>
         </div>
