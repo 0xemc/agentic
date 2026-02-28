@@ -21,6 +21,7 @@ export default function AgentPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const previousScrollHeight = useRef<number>(0);
+  const isInitialRender = useRef(true);
 
   const { contexts } = useAgentic();
   const { messages, sendMessage } = useAgentContext(agentId);
@@ -34,7 +35,11 @@ export default function AgentPage() {
   // Auto-scroll to bottom when messages change or initially load
   useEffect(() => {
     if (messagesEndRef.current && !isLoadingMore) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      // Instant scroll on initial render, smooth scroll on new messages
+      messagesEndRef.current.scrollIntoView({
+        behavior: isInitialRender.current ? 'instant' : 'smooth'
+      });
+      isInitialRender.current = false;
     }
   }, [displayMessages.length, isLoadingMore]);
 

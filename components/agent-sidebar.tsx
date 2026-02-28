@@ -78,11 +78,24 @@ export function AgentSidebar({
   const hasMore = messages.length > displayCount;
 
   // Auto-scroll to bottom when messages change or sidebar opens
+  const isInitialRender = useRef(true);
+
   useEffect(() => {
     if (open && messagesEndRef.current && !isLoadingMore) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      // Instant scroll on initial render, smooth scroll on new messages
+      messagesEndRef.current.scrollIntoView({
+        behavior: isInitialRender.current ? 'instant' : 'smooth'
+      });
+      isInitialRender.current = false;
     }
   }, [displayMessages.length, open, isLoadingMore]);
+
+  // Reset initial render flag when sidebar closes
+  useEffect(() => {
+    if (!open) {
+      isInitialRender.current = true;
+    }
+  }, [open]);
 
   // Handle scroll to load more messages
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
