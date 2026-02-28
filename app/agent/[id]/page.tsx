@@ -35,26 +35,26 @@ export default function AgentPage() {
   // Auto-scroll to bottom when messages change or initially load
   useEffect(() => {
     if (messagesEndRef.current && !isLoadingMore) {
-      const scrollContainer = scrollContainerRef.current;
+      // Small delay to ensure DOM has updated with new message
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          const scrollContainer = scrollContainerRef.current;
 
-      // Check if user is near the bottom (within 100px)
-      const isNearBottom = scrollContainer
-        ? scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 100
-        : true;
+          // Check if user is near the bottom (within 200px for more tolerance)
+          const isNearBottom = scrollContainer
+            ? scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 200
+            : true;
 
-      // Only auto-scroll if initial render or user is already near bottom
-      if (isInitialRender.current || isNearBottom) {
-        // Small delay to ensure DOM has updated with new message
-        setTimeout(() => {
-          if (messagesEndRef.current) {
+          // Only auto-scroll if initial render or user is already near bottom
+          if (isInitialRender.current || isNearBottom) {
             messagesEndRef.current.scrollIntoView({
               behavior: isInitialRender.current ? 'instant' : 'smooth'
             });
           }
-        }, 0);
-      }
 
-      isInitialRender.current = false;
+          isInitialRender.current = false;
+        }
+      }, 0);
     }
   }, [messages, isLoadingMore]);
 

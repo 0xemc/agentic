@@ -3,7 +3,8 @@
 import { Agent } from '@/types/agent';
 import { Card } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
-import { Activity, Clock, MessageSquare, AlertCircle, Pause, Power } from 'lucide-react';
+import { Activity, Clock, MessageSquare, AlertCircle, Pause, Power, Terminal } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface AgentCardProps {
   agent: Agent;
@@ -49,6 +50,26 @@ const statusConfig = {
 export function AgentCard({ agent, onClick, index = 0 }: AgentCardProps) {
   const status = statusConfig[agent.status];
   const StatusIcon = status.icon;
+  const [logLines, setLogLines] = useState<string[]>([]);
+
+  // Poll for log updates every 2 seconds
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const response = await fetch(`/api/agents/${agent.id}/logs?lines=3`);
+        if (response.ok) {
+          const data = await response.json();
+          setLogLines(data.lines || []);
+        }
+      } catch (error) {
+        // Silently fail - logs are optional
+      }
+    };
+
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 2000);
+    return () => clearInterval(interval);
+  }, [agent.id]);
 
   return (
     <Card
@@ -109,7 +130,7 @@ export function AgentCard({ agent, onClick, index = 0 }: AgentCardProps) {
         )}
 
         {/* Metrics */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           {/* Last Activity */}
           <div className="flex items-center gap-2 p-2 rounded-md bg-background/50 border border-border/30">
             <div className="w-7 h-7 rounded flex items-center justify-center bg-muted/50">
@@ -140,6 +161,25 @@ export function AgentCard({ agent, onClick, index = 0 }: AgentCardProps) {
             </div>
           </div>
         </div>
+
+        {/* Agent Output */}
+        {logLines.length > 0 && (
+          <div className="rounded-md bg-black/50 border border-border/30 p-2">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Terminal className="w-3 h-3 text-emerald-400" />
+              <span className="text-[9px] text-muted-foreground/80 font-mono uppercase tracking-wider">
+                Live Output
+              </span>
+            </div>
+            <div className="space-y-0.5 font-mono text-[10px] leading-tight">
+              {logLines.map((line, i) => (
+                <div key={i} className="text-emerald-400/90 truncate">
+                  {line}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom hover indicator */}
