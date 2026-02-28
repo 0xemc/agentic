@@ -1,80 +1,149 @@
 'use client';
 
 import { Agent } from '@/types/agent';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Card } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
+import { Activity, Clock, MessageSquare, AlertCircle, Pause, Power } from 'lucide-react';
 
 interface AgentCardProps {
   agent: Agent;
   onClick: () => void;
+  index?: number;
 }
 
-const statusColors = {
-  active: 'bg-green-500',
-  idle: 'bg-yellow-500',
-  error: 'bg-red-500',
-  offline: 'bg-gray-500',
+const statusConfig = {
+  active: {
+    icon: Activity,
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500/20',
+    pulse: 'animate-pulse',
+    label: 'ACTIVE'
+  },
+  idle: {
+    icon: Pause,
+    color: 'text-amber-500',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/20',
+    pulse: '',
+    label: 'IDLE'
+  },
+  error: {
+    icon: AlertCircle,
+    color: 'text-red-500',
+    bg: 'bg-red-500/10',
+    border: 'border-red-500/20',
+    pulse: '',
+    label: 'ERROR'
+  },
+  offline: {
+    icon: Power,
+    color: 'text-gray-500',
+    bg: 'bg-gray-500/10',
+    border: 'border-gray-500/20',
+    pulse: '',
+    label: 'OFFLINE'
+  },
 };
 
-const statusLabels = {
-  active: 'Active',
-  idle: 'Idle',
-  error: 'Error',
-  offline: 'Offline',
-};
+export function AgentCard({ agent, onClick, index = 0 }: AgentCardProps) {
+  const status = statusConfig[agent.status];
+  const StatusIcon = status.icon;
 
-export function AgentCard({ agent, onClick }: AgentCardProps) {
   return (
     <Card
-      className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] relative overflow-hidden"
+      className="group relative cursor-pointer border-border/40 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-border hover:bg-card hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20 overflow-hidden"
       onClick={onClick}
+      style={{
+        animationDelay: `${index * 50}ms`,
+        animation: 'fadeInUp 0.5s ease-out forwards',
+        opacity: 0,
+      }}
     >
-      {/* Status indicator */}
-      <div className={`absolute top-0 right-0 w-2 h-full ${statusColors[agent.status]}`} />
+      {/* Top accent line */}
+      <div className={`absolute top-0 left-0 right-0 h-[2px] ${status.bg} ${status.border} border-t-2`} />
 
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarFallback className="bg-primary text-primary-foreground">
+      {/* Hover gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      <div className="relative p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3 flex-1">
+            {/* Avatar with status indicator */}
+            <div className="relative">
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center font-mono text-sm font-bold text-primary">
                 {agent.name.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-lg">{agent.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">{agent.type}</p>
+              </div>
+              <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full ${status.bg} border-2 border-background flex items-center justify-center ${status.pulse}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${status.color.replace('text-', 'bg-')}`} />
+              </div>
             </div>
-          </div>
-        </div>
-      </CardHeader>
 
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Badge variant={agent.status === 'active' ? 'default' : 'secondary'}>
-              {statusLabels[agent.status]}
-            </Badge>
-            <span className="text-xs text-muted-foreground">
-              {formatDistanceToNow(agent.lastActivity, { addSuffix: true })}
-            </span>
-          </div>
-
-          {agent.currentTask && (
-            <div className="mt-2">
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {agent.currentTask}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base truncate mb-0.5 group-hover:text-primary transition-colors">
+                {agent.name}
+              </h3>
+              <p className="text-xs text-muted-foreground/80 font-mono uppercase tracking-wider">
+                {agent.type}
               </p>
             </div>
-          )}
+          </div>
 
-          <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-xs text-muted-foreground">Messages</span>
-            <span className="text-sm font-semibold">{agent.messageCount}</span>
+          {/* Status badge */}
+          <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${status.bg} ${status.border} border`}>
+            <StatusIcon className={`w-3 h-3 ${status.color}`} />
+            <span className={`text-[10px] font-mono font-bold tracking-wide ${status.color}`}>
+              {status.label}
+            </span>
           </div>
         </div>
-      </CardContent>
+
+        {/* Current Task */}
+        {agent.currentTask && (
+          <div className="mb-4 p-3 rounded-md bg-muted/30 border border-border/30">
+            <p className="text-xs text-muted-foreground/90 line-clamp-2 leading-relaxed">
+              {agent.currentTask}
+            </p>
+          </div>
+        )}
+
+        {/* Metrics */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Last Activity */}
+          <div className="flex items-center gap-2 p-2 rounded-md bg-background/50 border border-border/30">
+            <div className="w-7 h-7 rounded flex items-center justify-center bg-muted/50">
+              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-muted-foreground/60 font-mono uppercase tracking-wide mb-0.5">
+                Activity
+              </p>
+              <p className="text-xs font-medium truncate">
+                {formatDistanceToNow(agent.lastActivity, { addSuffix: true }).replace('about ', '')}
+              </p>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="flex items-center gap-2 p-2 rounded-md bg-background/50 border border-border/30">
+            <div className="w-7 h-7 rounded flex items-center justify-center bg-muted/50">
+              <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-muted-foreground/60 font-mono uppercase tracking-wide mb-0.5">
+                Messages
+              </p>
+              <p className="text-sm font-mono font-bold tabular-nums">
+                {agent.messageCount}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom hover indicator */}
+      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     </Card>
   );
 }
