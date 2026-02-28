@@ -13,6 +13,7 @@ async function getAdapter() {
 
     adapter = new NanoClawAdapter({
       groupsPath: process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups',
+      databasePath: process.env.NANOCLAW_DB_PATH || '/workspace/project/store/messages.db',
       pollInterval: 0,
     });
 
@@ -40,9 +41,9 @@ export async function GET(
       return NextResponse.json({ messages: [] });
     }
 
-    // Get limit from query params (default 20)
+    // Get limit from query params (default 100)
     const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get('limit') || '20', 10);
+    const limit = parseInt(url.searchParams.get('limit') || '100', 10);
 
     const messages = await adapter.getMessages(id, limit);
 

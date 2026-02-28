@@ -31,8 +31,8 @@ export interface NanoClawRegisteredGroup {
 export class NanoClawDB {
   private db: Database.Database;
 
-  constructor(dbPath: string) {
-    this.db = new Database(dbPath, { readonly: true });
+  constructor(dbPath: string, readonly = false) {
+    this.db = new Database(dbPath, { readonly });
   }
 
   getRegisteredGroups(): NanoClawRegisteredGroup[] {
@@ -102,6 +102,45 @@ export class NanoClawDB {
     } catch (error) {
       console.error('Error getting last activity:', error);
       return new Date(0);
+    }
+  }
+
+  async sendMessage(chatJid: string, content: string): Promise<AgentMessage> {
+    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const timestamp = new Date().toISOString();
+
+    try {
+      const stmt = this.db.prepare(`
+        INSERT INTO messages (id, chat_jid, sender, sender_name, content, timestamp, is_from_me, is_bot_message)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(
+        messageId,
+        chatJid,
+        'user',
+        'User',
+        content,
+        timestamp,
+        1, // is_from_me = true (message from dashboard user)
+        0  // is_bot_message = false
+      );
+
+      return {
+        id: messageId,
+        contextId: chatJid,
+        sender: 'user',
+        content,
+        timestamp: new Date(timestamp),
+        metadata: {
+          sender_name: 'User',
+          is_from_me: true,
+          is_bot_message: false,
+        },
+      };
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
     }
   }
 

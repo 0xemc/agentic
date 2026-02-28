@@ -89,8 +89,44 @@ export class APIAdapter implements AgenticAdapter {
   }
 
   async sendMessage(contextId: string, content: string): Promise<AgentMessage> {
-    // Sending messages not yet implemented
-    throw new Error('Sending messages not yet implemented for API adapter');
+    console.log('[APIAdapter] sendMessage called:', { contextId, content });
+
+    if (!this.connected) {
+      console.error('[APIAdapter] Adapter not connected');
+      throw new Error('Adapter not connected');
+    }
+
+    try {
+      console.log('[APIAdapter] Making POST request to:', `/api/agents/${contextId}/send`);
+      const response = await fetch(`/api/agents/${contextId}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      console.log('[APIAdapter] Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error('[APIAdapter] API error response:', errorData);
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('[APIAdapter] Success response:', data);
+      const message = data.message;
+
+      // Convert date string to Date object
+      return {
+        ...message,
+        timestamp: new Date(message.timestamp),
+      };
+    } catch (error) {
+      console.error('[APIAdapter] Error sending message:', error);
+      throw error;
+    }
   }
 
   onContextUpdate(callback: (context: AgentContext) => void): () => void {

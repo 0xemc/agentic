@@ -106,16 +106,18 @@ export function useAgentContext(contextId: string | null) {
 
       try {
         const message = await manager.sendMessage(contextId, content);
-        if (message) {
-          setMessages((prev) => [...prev, message]);
-        }
+
+        // Reload messages to ensure we have the latest from the database
+        // Don't add message optimistically - just reload to avoid duplicates
+        setTimeout(() => loadMessages(), 500);
+
         return message;
       } catch (err) {
         setError(err as Error);
         return null;
       }
     },
-    [manager, contextId]
+    [manager, contextId, loadMessages]
   );
 
   // Subscribe to new messages

@@ -13,6 +13,7 @@ async function getAdapter() {
 
     adapter = new NanoClawAdapter({
       groupsPath: process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups',
+      databasePath: process.env.NANOCLAW_DB_PATH || '/workspace/project/store/messages.db',
       pollInterval: 0, // Disable polling in API route
     });
 
