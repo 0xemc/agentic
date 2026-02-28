@@ -317,8 +317,11 @@ export function AgentSidebar({
                       key={message.id}
                       className={`flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}
                       style={{
+                        animationName: 'fadeInUp',
+                        animationDuration: '0.3s',
+                        animationTimingFunction: 'ease-out',
+                        animationFillMode: 'forwards',
                         animationDelay: `${index * 30}ms`,
-                        animation: 'fadeInUp 0.3s ease-out forwards',
                         opacity: 0,
                       }}
                     >
@@ -354,19 +357,29 @@ export function AgentSidebar({
 
         {/* Input */}
         <div className="p-4 bg-muted/20">
-          <div className="flex gap-2">
-            <input
-              type="text"
+          <div className="flex gap-2 items-end">
+            <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+              onChange={(e) => {
+                setInput(e.target.value);
+                // Auto-resize textarea
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 350) + 'px';
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
               placeholder="Type a message..."
-              className="flex-1 px-4 py-2.5 border border-border/50 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              rows={1}
+              className="flex-1 px-4 py-2.5 border border-border/50 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none min-h-[42px] max-h-[350px] overflow-y-auto scrollbar-hide"
             />
             <Button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="px-4"
+              className="px-4 h-10"
             >
               <Send className="w-4 h-4" />
             </Button>

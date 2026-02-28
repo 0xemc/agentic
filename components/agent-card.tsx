@@ -71,8 +71,11 @@ export function AgentCard({ agent, onClick, index = 0 }: AgentCardProps) {
       className="group relative cursor-pointer border-border/40 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-border hover:bg-card hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20 overflow-hidden"
       onClick={onClick}
       style={{
+        animationName: 'fadeInUp',
+        animationDuration: '0.5s',
+        animationTimingFunction: 'ease-out',
+        animationFillMode: 'forwards',
         animationDelay: `${index * 50}ms`,
-        animation: 'fadeInUp 0.5s ease-out forwards',
         opacity: 0,
       }}
     >

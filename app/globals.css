@@ -217,3 +217,45 @@
   max-width: 90vw !important;
   min-width: 350px !important;
 }
+
+/* Auto-hide scrollbar utility - shows only when scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: thin;  /* Firefox - thin scrollbar */
+  scrollbar-color: transparent transparent;  /* Firefox - invisible by default */
+  transition: scrollbar-color 0.2s;
+}
+
+/* Show scrollbar on hover or when scrolling in Firefox */
+.scrollbar-hide:hover,
+.scrollbar-hide:focus,
+.scrollbar-hide:active {
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+}
+
+/* Webkit browsers (Chrome, Safari, Opera) */
+.scrollbar-hide::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-hide::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-hide::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+/* Show scrollbar on hover or when scrolling */
+.scrollbar-hide:hover::-webkit-scrollbar-thumb,
+.scrollbar-hide:focus::-webkit-scrollbar-thumb,
+.scrollbar-hide:active::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.5);
+}
+
+.scrollbar-hide:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(155, 155, 155, 0.7);
+}
