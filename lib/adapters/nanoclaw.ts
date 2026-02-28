@@ -4,7 +4,7 @@
  * Connects to NanoClaw's database to read agent contexts and conversation history.
  */
 
-import { AgenticAdapter, AgentContext, AgentMessage } from '../core/types';
+import { AgenticAdapter, AgentContext, AgentMessage, AgentStatus } from '../core/types';
 import { NanoClawDB, getStatus } from './nanoclaw-db';
 import fs from 'fs/promises';
 import path from 'path';
@@ -91,7 +91,9 @@ export class NanoClawAdapter implements AgenticAdapter {
       try {
         const lastActivity = this.db.getLastActivity(group.jid);
         const messageCount = this.db.getMessageCount(group.jid);
-        const status = getStatus(lastActivity);
+
+        // Use real-time container status detection
+        const status = await this.getContextStatus(group.folder);
 
         contexts.push({
           id: group.folder,
@@ -147,6 +149,58 @@ export class NanoClawAdapter implements AgenticAdapter {
   onMessage(callback: (message: AgentMessage) => void): () => void {
     this.messageCallbacks.add(callback);
     return () => this.messageCallbacks.delete(callback);
+  }
+
+  async getContextStatus(contextId: string): Promise<AgentStatus> {
+    if (!this.connected || !this.db) {
+      throw new Error('Adapter not connected');
+    }
+
+    // The contextId IS the folder name, so use it directly
+    const folder = contextId;
+    const logsPath = path.join(this.config.groupsPath, folder, 'logs');
+
+    try {
+      // Check if logs directory exists
+      const files = await fs.readdir(logsPath);
+      const logFiles = files.filter((f) => f.startsWith('container-') && f.endsWith('.log'));
+
+      if (logFiles.length === 0) {
+        return 'offline';
+      }
+
+      // Get the most recent log file
+      const logFilePaths = logFiles.map((f) => path.join(logsPath, f));
+      const stats = await Promise.all(logFilePaths.map((f) => fs.stat(f)));
+
+      // Find the most recently modified log file
+      let mostRecentTime = 0;
+      for (const stat of stats) {
+        const mtime = stat.mtimeMs;
+        if (mtime > mostRecentTime) {
+          mostRecentTime = mtime;
+        }
+      }
+
+      const lastModified = new Date(mostRecentTime);
+      const secondsSinceActivity = (Date.now() - lastModified.getTime()) / 1000;
+
+      // Active: modified within last 30 seconds
+      if (secondsSinceActivity < 30) {
+        return 'active';
+      }
+
+      // Idle: modified within last 5 minutes
+      if (secondsSinceActivity < 300) {
+        return 'idle';
+      }
+
+      // Otherwise offline
+      return 'offline';
+    } catch (error) {
+      // If we can't read logs, return offline
+      return 'offline';
+    }
   }
 
   private async pollForUpdates(): Promise<void> {

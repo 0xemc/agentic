@@ -69,6 +69,12 @@ export interface AgenticAdapter {
    * Subscribe to new messages
    */
   onMessage(callback: (message: AgentMessage) => void): () => void;
+
+  /**
+   * Get real-time status for a specific context (optional)
+   * If not implemented, falls back to time-based status detection
+   */
+  getContextStatus?(contextId: string): Promise<AgentStatus>;
 }
 
 export interface AdapterConfig {

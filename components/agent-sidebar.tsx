@@ -195,7 +195,7 @@ export function AgentSidebar({
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="p-0 gap-0 border-l-2"
+        className="p-0 gap-0 border-l-2 w-full lg:w-auto"
         data-resizable="true"
         style={{
           '--sheet-width': `${width}px`
@@ -204,10 +204,10 @@ export function AgentSidebar({
         <VisuallyHidden>
           <SheetTitle>{agent.name} - Agent Chat</SheetTitle>
         </VisuallyHidden>
-        {/* Resize Handle */}
+        {/* Resize Handle - Desktop only */}
         <div
           onMouseDown={handleMouseDown}
-          className="absolute left-0 top-0 bottom-0 w-6 -ml-3 cursor-ew-resize z-[100] group flex items-center justify-center"
+          className="absolute left-0 top-0 bottom-0 w-6 -ml-3 cursor-ew-resize z-[100] group items-center justify-center hidden lg:flex"
           style={{ touchAction: 'none' }}
         >
           <div className="w-1.5 h-24 bg-primary/30 group-hover:bg-primary group-hover:w-2 rounded-full transition-all shadow-sm" />

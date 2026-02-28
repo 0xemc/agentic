@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import chokidar from 'chokidar';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -10,90 +9,67 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const lines = 3;
+
+  // Map folder ID to actual group folder path
   const groupsBasePath = process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups';
   const logsPath = path.join(groupsBasePath, id, 'logs');
 
+  // Create a readable stream for SSE
   const encoder = new TextEncoder();
-
   const stream = new ReadableStream({
     async start(controller) {
-      console.log(`[SSE Logs] Starting stream for agent: ${id}`);
+      const sendEvent = (data: any) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+      };
 
-      // Send initial connection message
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected' })}\n\n`));
-
-      // Function to read and send the latest log lines
-      const sendLatestLogs = async () => {
+      // Function to get latest logs
+      const getLatestLogs = async () => {
         try {
           // Check if logs directory exists
-          try {
-            await fs.access(logsPath);
-          } catch {
-            // Directory doesn't exist yet
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'logs', lines: [] })}\n\n`));
-            return;
-          }
+          await fs.access(logsPath);
 
           // Get all log files
           const files = await fs.readdir(logsPath);
           const logFiles = files
-            .filter(f => f.startsWith('container-') && f.endsWith('.log'))
+            .filter((f) => f.startsWith('container-') && f.endsWith('.log'))
             .sort()
             .reverse(); // Most recent first
 
           if (logFiles.length === 0) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'logs', lines: [] })}\n\n`));
-            return;
+            return { lines: [], latest: null };
           }
 
           // Read the most recent log file
-          const latestLogPath = path.join(logsPath, logFiles[0]);
-          const content = await fs.readFile(latestLogPath, 'utf-8');
+          const latestLog = path.join(logsPath, logFiles[0]);
+          const content = await fs.readFile(latestLog, 'utf-8');
+          const allLines = content.split('\n').filter((line) => line.trim());
 
-          // Get last 3 lines
-          const allLines = content.split('\n').filter(line => line.trim().length > 0);
-          const lastLines = allLines.slice(-3);
+          // Get last N lines
+          const lastLines = allLines.slice(-lines);
 
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            type: 'logs',
+          return {
             lines: lastLines,
-            latest: logFiles[0]
-          })}\n\n`));
+            latest: logFiles[0],
+          };
         } catch (error) {
-          console.error('[SSE Logs] Error reading logs:', error);
+          return { lines: [], latest: null };
         }
       };
 
       // Send initial logs
-      await sendLatestLogs();
+      const initialLogs = await getLatestLogs();
+      sendEvent({ type: 'logs', ...initialLogs });
 
-      // Watch the logs directory for changes
-      const watcher = chokidar.watch(logsPath, {
-        persistent: true,
-        ignoreInitial: true,
-        awaitWriteFinish: {
-          stabilityThreshold: 100,
-          pollInterval: 50
-        }
-      });
+      // Poll for updates every 2 seconds
+      const interval = setInterval(async () => {
+        const logs = await getLatestLogs();
+        sendEvent({ type: 'logs', ...logs });
+      }, 2000);
 
-      watcher.on('change', sendLatestLogs);
-      watcher.on('add', sendLatestLogs);
-
-      // Send heartbeat every 30 seconds to keep connection alive
-      const heartbeat = setInterval(() => {
-        try {
-          controller.enqueue(encoder.encode(`: heartbeat\n\n`));
-        } catch (error) {
-          clearInterval(heartbeat);
-        }
-      }, 30000);
-
-      // Cleanup on disconnect
+      // Cleanup on close
       request.signal.addEventListener('abort', () => {
-        console.log(`[SSE Logs] Client disconnected from agent: ${id}`);
-        clearInterval(heartbeat);
-        watcher.close();
+        clearInterval(interval);
         controller.close();
       });
     },
@@ -102,9 +78,8 @@ export async function GET(
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-transform',
-      'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
     },
   });
 }
