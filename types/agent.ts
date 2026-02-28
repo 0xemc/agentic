@@ -1,20 +1,13 @@
-export interface Agent {
-  id: string;
-  name: string;
-  status: 'active' | 'idle' | 'error' | 'offline';
-  type: string;
-  lastActivity: Date;
-  currentTask?: string;
-  messageCount: number;
-  avatar?: string;
-}
+/**
+ * Legacy types - maintained for backwards compatibility with UI components
+ * Maps to core framework-agnostic types
+ */
 
-export interface Message {
-  id: string;
+import { AgentContext, AgentMessage } from '@/lib/core/types';
+
+export type Agent = AgentContext & { avatar?: string };
+export interface Message extends Omit<AgentMessage, 'contextId'> {
   agentId: string;
-  sender: 'user' | 'agent';
-  content: string;
-  timestamp: Date;
 }
 
 export interface Context {
@@ -25,3 +18,7 @@ export interface Context {
     updated: Date;
   };
 }
+
+// Re-export core types for convenience
+export type { AgentContext, AgentMessage, AgentStatus } from '@/lib/core/types';
+export type { AgenticAdapter, AdapterConfig } from '@/lib/core/types';
