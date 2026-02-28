@@ -4,32 +4,28 @@
 
 import { AgenticManager } from '../core/manager';
 import { MockAdapter } from '../adapters/mock';
-// import { NanoClawAdapter } from '../adapters/nanoclaw';
+import { APIAdapter } from '../adapters/api';
 
 /**
  * Initialize and register all configured adapters
  */
 export async function initializeAdapters(manager: AgenticManager): Promise<void> {
-  // Mock adapter (always available for testing)
-  const mockAdapter = new MockAdapter();
-  manager.registerAdapter(mockAdapter);
+  const config = getAdapterConfig();
 
-  // NanoClaw adapter (enable if NanoClaw is available)
-  // Uncomment and configure when running alongside NanoClaw
-  /*
-  if (typeof window === 'undefined') {
-    // Server-side only
-    try {
-      const nanoClawAdapter = new NanoClawAdapter({
-        groupsPath: process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups',
-        pollInterval: 5000,
-      });
-      manager.registerAdapter(nanoClawAdapter);
-    } catch (error) {
-      console.warn('NanoClaw adapter not available:', error);
+  // Client-side: Use API adapter to fetch from server endpoints
+  if (typeof window !== 'undefined') {
+    // Check if NanoClaw is enabled via API
+    if (config.nanoclaw.enabled) {
+      const apiAdapter = new APIAdapter(config.nanoclaw.pollInterval);
+      manager.registerAdapter(apiAdapter);
+    }
+
+    // Optionally enable mock adapter for testing
+    if (config.mock.enabled) {
+      const mockAdapter = new MockAdapter();
+      manager.registerAdapter(mockAdapter);
     }
   }
-  */
 
   // Connect all adapters
   await manager.connectAll();
@@ -42,11 +38,10 @@ export function getAdapterConfig() {
   return {
     nanoclaw: {
       enabled: process.env.NEXT_PUBLIC_NANOCLAW_ENABLED === 'true',
-      groupsPath: process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups',
       pollInterval: parseInt(process.env.NANOCLAW_POLL_INTERVAL || '5000', 10),
     },
     mock: {
-      enabled: process.env.NEXT_PUBLIC_MOCK_ENABLED !== 'false', // Enabled by default
+      enabled: process.env.NEXT_PUBLIC_MOCK_ENABLED === 'true',
     },
   };
 }

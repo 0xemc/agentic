@@ -83,38 +83,38 @@
 }
 
 .dark {
-  /* Military dark green aesthetic - think night vision / tactical displays */
-  --background: oklch(0.12 0.015 160); /* Very dark green-black */
-  --foreground: oklch(0.92 0.03 160); /* Light green-tinted white */
-  --card: oklch(0.16 0.02 160); /* Dark green card background */
-  --card-foreground: oklch(0.92 0.03 160);
-  --popover: oklch(0.16 0.02 160);
-  --popover-foreground: oklch(0.92 0.03 160);
-  --primary: oklch(0.65 0.15 155); /* Tactical green */
-  --primary-foreground: oklch(0.12 0.015 160);
-  --secondary: oklch(0.22 0.025 160); /* Muted dark green */
-  --secondary-foreground: oklch(0.92 0.03 160);
-  --muted: oklch(0.22 0.025 160);
-  --muted-foreground: oklch(0.58 0.04 160); /* Olive green text */
-  --accent: oklch(0.25 0.03 160);
-  --accent-foreground: oklch(0.92 0.03 160);
+  /* Subtle military aesthetic - dark with mild green tint */
+  --background: oklch(0.12 0.005 160); /* Very dark with subtle green hint */
+  --foreground: oklch(0.92 0.01 160); /* Light with subtle green tint */
+  --card: oklch(0.16 0.008 160); /* Dark card background */
+  --card-foreground: oklch(0.92 0.01 160);
+  --popover: oklch(0.16 0.008 160);
+  --popover-foreground: oklch(0.92 0.01 160);
+  --primary: oklch(0.65 0.08 155); /* Muted tactical green */
+  --primary-foreground: oklch(0.12 0.005 160);
+  --secondary: oklch(0.22 0.01 160); /* Subtle dark green */
+  --secondary-foreground: oklch(0.92 0.01 160);
+  --muted: oklch(0.22 0.01 160);
+  --muted-foreground: oklch(0.58 0.015 160); /* Subtle olive text */
+  --accent: oklch(0.25 0.012 160);
+  --accent-foreground: oklch(0.92 0.01 160);
   --destructive: oklch(0.55 0.22 25); /* Red for errors */
-  --border: oklch(0.3 0.03 160); /* Olive border */
-  --input: oklch(0.25 0.03 160);
-  --ring: oklch(0.65 0.15 155);
-  --chart-1: oklch(0.55 0.18 155);
-  --chart-2: oklch(0.6 0.15 180);
-  --chart-3: oklch(0.65 0.12 140);
-  --chart-4: oklch(0.5 0.2 165);
-  --chart-5: oklch(0.58 0.16 150);
-  --sidebar: oklch(0.16 0.02 160);
-  --sidebar-foreground: oklch(0.92 0.03 160);
-  --sidebar-primary: oklch(0.65 0.15 155);
-  --sidebar-primary-foreground: oklch(0.12 0.015 160);
-  --sidebar-accent: oklch(0.22 0.025 160);
-  --sidebar-accent-foreground: oklch(0.92 0.03 160);
-  --sidebar-border: oklch(0.3 0.03 160);
-  --sidebar-ring: oklch(0.65 0.15 155);
+  --border: oklch(0.3 0.012 160); /* Subtle olive border */
+  --input: oklch(0.25 0.012 160);
+  --ring: oklch(0.65 0.08 155);
+  --chart-1: oklch(0.55 0.1 155);
+  --chart-2: oklch(0.6 0.08 180);
+  --chart-3: oklch(0.65 0.06 140);
+  --chart-4: oklch(0.5 0.11 165);
+  --chart-5: oklch(0.58 0.09 150);
+  --sidebar: oklch(0.16 0.008 160);
+  --sidebar-foreground: oklch(0.92 0.01 160);
+  --sidebar-primary: oklch(0.65 0.08 155);
+  --sidebar-primary-foreground: oklch(0.12 0.005 160);
+  --sidebar-accent: oklch(0.22 0.01 160);
+  --sidebar-accent-foreground: oklch(0.92 0.01 160);
+  --sidebar-border: oklch(0.3 0.012 160);
+  --sidebar-ring: oklch(0.65 0.08 155);
 }
 
 @layer base {
@@ -125,22 +125,67 @@
     @apply bg-background text-foreground;
   }
 
-  /* Military aesthetic enhancements for dark mode */
+  /* Subtle military aesthetic for dark mode */
   .dark {
-    /* Subtle scanline effect for CRT/tactical display feel */
+    /* Very subtle scanline effect */
     background-image:
       repeating-linear-gradient(
         0deg,
         transparent,
         transparent 2px,
-        rgba(0, 255, 0, 0.015) 2px,
-        rgba(0, 255, 0, 0.015) 4px
+        rgba(0, 255, 0, 0.003) 2px,
+        rgba(0, 255, 0, 0.003) 4px
       );
   }
 
-  .dark body {
-    /* Subtle green glow on text for night vision effect */
-    text-shadow: 0 0 1px rgba(0, 255, 0, 0.1);
+  /* Message content prose styling */
+  .prose {
+    color: inherit;
+    max-width: none;
+  }
+
+  .prose :where(p):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .prose :where(strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+    color: inherit;
+    font-weight: 700;
+  }
+
+  .prose :where(code):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+    color: inherit;
+  }
+
+  .prose :where(a):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  .prose :where(ul):not(:where([class~="not-prose"],[class~="not-prose"] *)),
+  .prose :where(ol):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .prose :where(li):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  /* Dark mode prose adjustments */
+  .dark .prose {
+    color: inherit;
+  }
+
+  .dark .prose :where(code):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .dark .prose :where(strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+    color: inherit;
+    font-weight: 700;
   }
 }
 
