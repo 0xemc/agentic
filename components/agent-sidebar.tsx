@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { MessageContent } from '@/components/message-content';
+import { TypingIndicator } from '@/components/typing-indicator';
 import { formatDistanceToNow } from 'date-fns';
 import { X, Activity, Clock, MessageSquare, Send, AlertCircle, Pause, Power } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
@@ -17,6 +18,7 @@ interface AgentSidebarProps {
   open: boolean;
   onClose: () => void;
   onSendMessage: (content: string) => void;
+  isAgentTyping?: boolean;
 }
 
 const statusConfig = {
@@ -56,6 +58,7 @@ export function AgentSidebar({
   open,
   onClose,
   onSendMessage,
+  isAgentTyping = false,
 }: AgentSidebarProps) {
   const [input, setInput] = useState('');
   const [displayCount, setDisplayCount] = useState(20);
@@ -345,6 +348,20 @@ export function AgentSidebar({
                       </div>
                     </div>
                   ))}
+                  {/* Typing Indicator */}
+                  {isAgentTyping && (
+                    <div
+                      style={{
+                        animationName: 'fadeInUp',
+                        animationDuration: '0.3s',
+                        animationTimingFunction: 'ease-out',
+                        animationFillMode: 'forwards',
+                        opacity: 0,
+                      }}
+                    >
+                      <TypingIndicator agentName={agent.name} />
+                    </div>
+                  )}
                   {/* Scroll anchor */}
                   <div ref={messagesEndRef} />
                 </>

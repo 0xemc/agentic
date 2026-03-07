@@ -14,7 +14,7 @@ export default function Home() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const { contexts, loading, error, manager } = useAgentic();
-  const { messages, sendMessage } = useAgentContext(selectedAgent?.id || null);
+  const { messages, sendMessage, isAgentTyping } = useAgentContext(selectedAgent?.id || null);
 
   // Detect mobile/desktop
   useEffect(() => {
@@ -170,6 +170,7 @@ export default function Home() {
         open={!!selectedAgent && !isMobile}
         onClose={handleCloseSidebar}
         onSendMessage={handleSendMessage}
+        isAgentTyping={isAgentTyping}
       />
     </div>
   );

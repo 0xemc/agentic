@@ -80,6 +80,7 @@ export function useAgentContext(contextId: string | null) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [isAgentTyping, setIsAgentTyping] = useState(false);
 
   // Load messages for the context
   const loadMessages = useCallback(async () => {
@@ -106,6 +107,9 @@ export function useAgentContext(contextId: string | null) {
       if (!contextId) return null;
 
       try {
+        // Show typing indicator immediately
+        setIsAgentTyping(true);
+
         const message = await manager.sendMessage(contextId, content);
 
         // Add message optimistically for immediate display
@@ -119,9 +123,16 @@ export function useAgentContext(contextId: string | null) {
           });
         }
 
+        // Keep typing indicator for a bit to wait for agent response
+        // It will be removed when agent message arrives via SSE
+        setTimeout(() => {
+          setIsAgentTyping(false);
+        }, 30000); // Max 30 seconds
+
         return message;
       } catch (err) {
         setError(err as Error);
+        setIsAgentTyping(false);
         return null;
       }
     },
@@ -168,6 +179,11 @@ export function useAgentContext(contextId: string | null) {
           }
           return [...prev, newMessage];
         });
+
+        // Hide typing indicator when agent message arrives
+        if (newMessage.sender === 'agent') {
+          setIsAgentTyping(false);
+        }
       }
     }
   });
@@ -178,5 +194,6 @@ export function useAgentContext(contextId: string | null) {
     error,
     sendMessage,
     reload: loadMessages,
+    isAgentTyping,
   };
 }
