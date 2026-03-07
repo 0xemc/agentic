@@ -188,6 +188,11 @@ export function useAgentContext(contextId: string | null) {
     }
   });
 
+  // Manual dismiss for typing indicator
+  const dismissTypingIndicator = useCallback(() => {
+    setIsAgentTyping(false);
+  }, []);
+
   return {
     messages,
     loading,
@@ -195,5 +200,6 @@ export function useAgentContext(contextId: string | null) {
     sendMessage,
     reload: loadMessages,
     isAgentTyping,
+    dismissTypingIndicator,
   };
 }

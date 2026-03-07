@@ -19,6 +19,7 @@ interface AgentSidebarProps {
   onClose: () => void;
   onSendMessage: (content: string) => void;
   isAgentTyping?: boolean;
+  onDismissTyping?: () => void;
 }
 
 const statusConfig = {
@@ -59,6 +60,7 @@ export function AgentSidebar({
   onClose,
   onSendMessage,
   isAgentTyping = false,
+  onDismissTyping,
 }: AgentSidebarProps) {
   const [input, setInput] = useState('');
   const [displayCount, setDisplayCount] = useState(20);
@@ -359,7 +361,10 @@ export function AgentSidebar({
                         opacity: 0,
                       }}
                     >
-                      <TypingIndicator agentName={agent.name} />
+                      <TypingIndicator
+                        agentName={agent.name}
+                        onDismiss={onDismissTyping}
+                      />
                     </div>
                   )}
                   {/* Scroll anchor */}
