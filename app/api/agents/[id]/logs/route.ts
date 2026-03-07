@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { getMockLogs } from '@/lib/mocks/logs';
 
 export async function GET(
   request: NextRequest,
@@ -10,6 +11,11 @@ export async function GET(
     const { id } = await params;
     const url = new URL(request.url);
     const lines = parseInt(url.searchParams.get('lines') || '3', 10);
+
+    // Return mock logs for mock agents
+    if (id.startsWith('mock-')) {
+      return NextResponse.json({ lines: getMockLogs(id, lines), latest: 'mock.log', timestamp: new Date().toISOString() });
+    }
 
     // Map folder ID to actual group folder path
     const groupsBasePath = process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups';

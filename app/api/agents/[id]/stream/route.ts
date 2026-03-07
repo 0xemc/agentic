@@ -15,10 +15,31 @@ export async function GET(
 
   const stream = new ReadableStream({
     async start(controller) {
-      console.log(`[SSE] Starting stream for context: ${id}`);
+      const send = (data: object) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+      };
 
       // Send initial connection message
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected' })}\n\n`));
+      send({ type: 'connected' });
+
+      // Mock agents: just keep alive with heartbeat, no DB watching needed
+      if (id.startsWith('mock-')) {
+        const heartbeat = setInterval(() => {
+          try {
+            send({ type: 'heartbeat', timestamp: new Date().toISOString() });
+          } catch {
+            clearInterval(heartbeat);
+          }
+        }, 30_000);
+
+        request.signal.addEventListener('abort', () => {
+          clearInterval(heartbeat);
+          controller.close();
+        });
+        return;
+      }
+
+      console.log(`[SSE] Starting stream for context: ${id}`);
 
       // Get registered groups to map folder to JID
       const db = new NanoClawDB(dbPath, true);
@@ -35,8 +56,8 @@ export async function GET(
         ignoreInitial: true,
         awaitWriteFinish: {
           stabilityThreshold: 100,
-          pollInterval: 50
-        }
+          pollInterval: 50,
+        },
       });
 
       watcher.on('change', async () => {
@@ -52,15 +73,13 @@ export async function GET(
             const latestMessage = messages[0];
             console.log(`[SSE] Sending new message to client:`, latestMessage.id);
 
-            const data = `data: ${JSON.stringify({
+            send({
               type: 'message',
               message: {
                 ...latestMessage,
-                timestamp: latestMessage.timestamp.toISOString()
-              }
-            })}\n\n`;
-
-            controller.enqueue(encoder.encode(data));
+                timestamp: latestMessage.timestamp.toISOString(),
+              },
+            });
           }
         } catch (error) {
           console.error('[SSE] Error processing database change:', error);
@@ -71,10 +90,10 @@ export async function GET(
       const heartbeat = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(`: heartbeat\n\n`));
-        } catch (error) {
+        } catch {
           clearInterval(heartbeat);
         }
-      }, 30000);
+      }, 30_000);
 
       // Cleanup on disconnect
       request.signal.addEventListener('abort', () => {
