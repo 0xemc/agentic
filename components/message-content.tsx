@@ -8,12 +8,12 @@ interface MessageContentProps {
 
 export function MessageContent({ content, className = '' }: MessageContentProps) {
   return (
-    <div className={`prose prose-sm max-w-none dark:prose-invert ${className}`}>
+    <div className={`prose prose-sm max-w-none dark:prose-invert break-words ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           // Paragraphs
-          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+          p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
 
           // Headings
           h1: ({ children }) => <h1 className="text-lg font-bold mb-2 mt-3 first:mt-0">{children}</h1>,
@@ -33,18 +33,18 @@ export function MessageContent({ content, className = '' }: MessageContentProps)
           code: ({ inline, children, ...props }: any) => {
             if (inline) {
               return (
-                <code className="px-1.5 py-0.5 rounded bg-muted/50 font-mono text-xs border border-border/30" {...props}>
+                <code className="px-1.5 py-0.5 rounded bg-muted text-[0.9em] font-mono border border-border/30 whitespace-nowrap" {...props}>
                   {children}
                 </code>
               );
             }
             return (
-              <code className="block px-3 py-2 rounded bg-muted/50 font-mono text-xs border border-border/30 overflow-x-auto mb-2" {...props}>
+              <code className="block px-3 py-2 rounded bg-muted font-mono text-xs border border-border/30 overflow-x-auto" {...props}>
                 {children}
               </code>
             );
           },
-          pre: ({ children }) => <pre className="mb-2 overflow-x-auto">{children}</pre>,
+          pre: ({ children }) => <pre className="mb-2 overflow-x-auto rounded">{children}</pre>,
 
           // Links
           a: ({ children, href }) => (
