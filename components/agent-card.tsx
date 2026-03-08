@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Activity, Clock, MessageSquare, AlertCircle, Pause, Power, Terminal } from 'lucide-react';
 import { useState } from 'react';
 import { useSSE } from '@/lib/hooks/useSSE';
+import { getChannelConfig } from '@/lib/core/channels';
 
 interface AgentCardProps {
   agent: Agent;
@@ -52,6 +53,7 @@ export function AgentCard({ agent, onClick, index = 0 }: AgentCardProps) {
   const status = statusConfig[agent.status];
   const StatusIcon = status.icon;
   const [logLines, setLogLines] = useState<string[]>([]);
+  const channelConfig = agent.channel ? getChannelConfig(agent.channel) : null;
 
   // Subscribe to SSE for real-time log updates
   useSSE({
@@ -100,9 +102,16 @@ export function AgentCard({ agent, onClick, index = 0 }: AgentCardProps) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base truncate mb-0.5 group-hover:text-primary transition-colors">
-                {agent.name}
-              </h3>
+              <div className="flex items-center gap-2 mb-0.5">
+                {channelConfig && (
+                  <span className="text-sm" title={channelConfig.name}>
+                    {channelConfig.icon}
+                  </span>
+                )}
+                <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
+                  {agent.name}
+                </h3>
+              </div>
               <p className="text-xs text-muted-foreground/80 font-mono uppercase tracking-wider">
                 {agent.type}
               </p>

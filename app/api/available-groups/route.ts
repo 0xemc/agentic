@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
+import { detectChannelType, getChannelConfig } from '@/lib/core/channels';
 
 export async function GET() {
   try {
@@ -9,7 +10,26 @@ export async function GET() {
       const data = await fs.readFile(availableGroupsPath, 'utf-8');
       const parsed = JSON.parse(data);
 
-      return NextResponse.json(parsed);
+      // Enhance groups with channel information
+      const enhancedGroups = (parsed.groups || []).map((group: any) => {
+        const channelType = detectChannelType(group.jid);
+        const channelConfig = getChannelConfig(channelType);
+
+        return {
+          ...group,
+          channel: {
+            type: channelType,
+            name: channelConfig.name,
+            icon: channelConfig.icon,
+            color: channelConfig.color,
+          },
+        };
+      });
+
+      return NextResponse.json({
+        ...parsed,
+        groups: enhancedGroups,
+      });
     } catch (error) {
       console.error('Error reading available_groups.json:', error);
       return NextResponse.json({

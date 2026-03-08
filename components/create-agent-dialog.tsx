@@ -15,6 +15,12 @@ interface AvailableGroup {
   name: string;
   lastActivity: string;
   isRegistered: boolean;
+  channel: {
+    type: string;
+    name: string;
+    icon: string;
+    color: string;
+  };
 }
 
 interface CreateAgentDialogProps {
@@ -125,7 +131,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
         <DialogHeader>
           <DialogTitle>Create New Agent</DialogTitle>
           <DialogDescription>
-            Select a WhatsApp group to register as an agent context
+            Select a messaging group to register as an agent context
           </DialogDescription>
         </DialogHeader>
 
@@ -172,9 +178,17 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
+                        <span className="text-base">{group.channel?.icon || '💬'}</span>
                         <p className="font-medium truncate">{group.name}</p>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] shrink-0"
+                          style={{ borderColor: group.channel?.color, color: group.channel?.color }}
+                        >
+                          {group.channel?.name || 'Unknown'}
+                        </Badge>
                         {group.isRegistered && (
-                          <Badge variant="secondary" className="text-[10px]">
+                          <Badge variant="secondary" className="text-[10px] shrink-0">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Registered
                           </Badge>

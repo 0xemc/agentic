@@ -2,11 +2,14 @@
  * Core framework-agnostic types for Agentic
  */
 
+import type { ChannelType } from './channels';
+
 export interface AgentContext {
   id: string;
   name: string;
   status: AgentStatus;
   type: string;
+  channel?: ChannelType;
   lastActivity: Date;
   currentTask?: string;
   messageCount: number;

@@ -6,6 +6,7 @@
 
 import { AgenticAdapter, AgentContext, AgentMessage, AgentStatus } from '../core/types';
 import { NanoClawDB, getStatus } from './nanoclaw-db';
+import { detectChannelType } from '../core/channels';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -95,11 +96,15 @@ export class NanoClawAdapter implements AgenticAdapter {
         // Use real-time container status detection
         const status = await this.getContextStatus(group.folder);
 
+        // Detect channel type from JID
+        const channelType = detectChannelType(group.jid);
+
         contexts.push({
           id: group.folder,
           name: group.name,
           status,
           type: 'NanoClaw',
+          channel: channelType,
           lastActivity,
           messageCount,
           metadata: {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs/promises';
+import { detectChannelType, generateFolderName, getChannelConfig } from '@/lib/core/channels';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,8 +16,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate folder name from group name (lowercase, replace spaces with hyphens)
-    const folder = `whatsapp_${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
+    // Detect channel type and generate folder name
+    const channelType = detectChannelType(jid);
+    const channelConfig = getChannelConfig(channelType);
+    const folder = generateFolderName(channelType, name);
 
     // Open database
     const dbPath = process.env.NANOCLAW_DB_PATH || '/workspace/project/store/messages.db';
@@ -56,11 +59,11 @@ export async function POST(request: NextRequest) {
         // Create initial CLAUDE.md
         const claudeMd = `# ${name}
 
-You are Barry, a personal assistant for the ${name} group.
+You are Barry, a personal assistant for the ${name} ${channelConfig.name} group.
 
 ## Context
 
-This is a WhatsApp group. Follow the general instructions from the global CLAUDE.md.
+This is a ${channelConfig.name} group. Follow the general instructions from the global CLAUDE.md.
 
 ## Memory
 
