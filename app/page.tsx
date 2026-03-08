@@ -5,15 +5,19 @@ import { useRouter } from 'next/navigation';
 import { Agent, Message } from '@/types/agent';
 import { AgentGrid } from '@/components/agent-grid';
 import { AgentSidebar } from '@/components/agent-sidebar';
+import { CreateAgentDialog } from '@/components/create-agent-dialog';
 import { useAgentic, useAgentContext } from '@/lib/hooks/useAgentic';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Plus } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const { contexts, loading, error, manager } = useAgentic();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const { contexts, loading, error, manager, reload } = useAgentic();
   const { messages, sendMessage, isAgentTyping, typingStage, dismissTypingIndicator } = useAgentContext(selectedAgent?.id || null);
 
   // Detect mobile/desktop
@@ -76,6 +80,15 @@ export default function Home() {
               </p>
             </div>
             <div className="flex items-center gap-4">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setCreateDialogOpen(true)}
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Create Agent</span>
+              </Button>
               <div className="flex items-center gap-3">
                 <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
                   Adapters
@@ -173,6 +186,16 @@ export default function Home() {
         isAgentTyping={isAgentTyping}
         typingStage={typingStage}
         onDismissTyping={dismissTypingIndicator}
+      />
+
+      {/* Create Agent Dialog */}
+      <CreateAgentDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={() => {
+          // Reload contexts after successful creation
+          reload();
+        }}
       />
     </div>
   );
