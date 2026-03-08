@@ -42,7 +42,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
   // New group fields
   const [newGroupName, setNewGroupName] = useState('');
   const [selectedChannel, setSelectedChannel] = useState<ChannelType>('web');
-  const [trigger, setTrigger] = useState('@Barry');
+  const [trigger, setTrigger] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -284,15 +284,15 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
               {/* Trigger Input */}
               {selectedGroup && (
                 <div className="space-y-2">
-                  <Label htmlFor="trigger">Trigger Word</Label>
+                  <Label htmlFor="trigger">Trigger Word (optional)</Label>
                   <Input
                     id="trigger"
                     value={trigger}
                     onChange={(e) => setTrigger(e.target.value)}
-                    placeholder="@Barry"
+                    placeholder="@Barry (leave empty to process all messages)"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Messages must start with this word to trigger the agent
+                    If set, messages must start with this word to trigger the agent. Leave empty to process all messages.
                   </p>
                 </div>
               )}
@@ -341,15 +341,15 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="newTrigger">Trigger Word</Label>
+                  <Label htmlFor="newTrigger">Trigger Word (optional)</Label>
                   <Input
                     id="newTrigger"
                     value={trigger}
                     onChange={(e) => setTrigger(e.target.value)}
-                    placeholder="@Barry"
+                    placeholder="@Barry (leave empty to process all messages)"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Messages must start with this word to trigger the agent
+                    If set, messages must start with this word to trigger the agent. Leave empty to process all messages.
                   </p>
                 </div>
               </div>

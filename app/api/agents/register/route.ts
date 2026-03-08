@@ -38,12 +38,15 @@ export async function POST(request: NextRequest) {
 
       // Insert into registered_groups
       const stmt = db.prepare(`
-        INSERT INTO registered_groups (jid, name, folder, trigger_pattern, added_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO registered_groups (jid, name, folder, trigger_pattern, added_at, requires_trigger)
+        VALUES (?, ?, ?, ?, ?, ?)
       `);
 
       const addedAt = new Date().toISOString();
-      stmt.run(jid, name, folder, trigger, addedAt);
+      // If no trigger word provided, set requires_trigger to 0
+      const requiresTrigger = !trigger || !trigger.trim() ? 0 : 1;
+
+      stmt.run(jid, name, folder, trigger || null, addedAt, requiresTrigger);
 
       db.close();
 

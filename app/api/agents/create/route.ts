@@ -49,10 +49,13 @@ export async function POST(request: NextRequest) {
       `);
 
       const addedAt = new Date().toISOString();
-      // Web and direct channels typically don't require trigger words
-      const requiresTrigger = channel === 'web' ? 0 : 1;
+      // Determine if trigger is required:
+      // - No trigger word provided = no trigger required
+      // - Web channel = no trigger required
+      // - Otherwise = trigger required
+      const requiresTrigger = !trigger || !trigger.trim() || channel === 'web' ? 0 : 1;
 
-      stmt.run(jid, name, folder, trigger, addedAt, requiresTrigger);
+      stmt.run(jid, name, folder, trigger || null, addedAt, requiresTrigger);
 
       db.close();
 
