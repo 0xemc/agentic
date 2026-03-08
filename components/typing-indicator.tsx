@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
 interface TypingIndicatorProps {
@@ -8,25 +7,7 @@ interface TypingIndicatorProps {
   onDismiss?: () => void;
 }
 
-const stages = [
-  { message: 'Message received...', icon: '✓' },
-  { message: 'Thinking...', icon: '💭' },
-  { message: 'Processing...', icon: '⚙️' },
-];
-
 export function TypingIndicator({ agentName, onDismiss }: TypingIndicatorProps) {
-  const [stageIndex, setStageIndex] = useState(0);
-
-  useEffect(() => {
-    // Cycle through stages every 2 seconds
-    const interval = setInterval(() => {
-      setStageIndex((prev) => (prev + 1) % stages.length);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const currentStage = stages[stageIndex];
 
   return (
     <div className="flex flex-col items-start group/typing">
@@ -44,9 +25,9 @@ export function TypingIndicator({ agentName, onDismiss }: TypingIndicatorProps) 
           </button>
         )}
         <div className="flex items-center gap-2">
-          <span className="text-base">{currentStage.icon}</span>
+          <span className="text-base">✓</span>
           <span className="text-sm text-muted-foreground italic">
-            {currentStage.message}
+            Message received...
           </span>
           <div className="flex gap-1 ml-1">
             <div
