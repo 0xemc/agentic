@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { MessageContent } from '@/components/message-content';
-import { TypingIndicator } from '@/components/typing-indicator';
+import { TypingIndicator, TypingStage } from '@/components/typing-indicator';
 import { formatDistanceToNow } from 'date-fns';
 import { X, Activity, Clock, MessageSquare, Send, AlertCircle, Pause, Power } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
@@ -19,6 +19,7 @@ interface AgentSidebarProps {
   onClose: () => void;
   onSendMessage: (content: string) => void;
   isAgentTyping?: boolean;
+  typingStage?: TypingStage;
   onDismissTyping?: () => void;
 }
 
@@ -60,6 +61,7 @@ export function AgentSidebar({
   onClose,
   onSendMessage,
   isAgentTyping = false,
+  typingStage = 'received',
   onDismissTyping,
 }: AgentSidebarProps) {
   const [input, setInput] = useState('');
@@ -363,6 +365,7 @@ export function AgentSidebar({
                     >
                       <TypingIndicator
                         agentName={agent.name}
+                        stage={typingStage}
                         onDismiss={onDismissTyping}
                       />
                     </div>

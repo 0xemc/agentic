@@ -2,12 +2,22 @@
 
 import { X } from 'lucide-react';
 
+export type TypingStage = 'sending' | 'received' | 'thinking';
+
 interface TypingIndicatorProps {
   agentName: string;
+  stage?: TypingStage;
   onDismiss?: () => void;
 }
 
-export function TypingIndicator({ agentName, onDismiss }: TypingIndicatorProps) {
+const stageConfig: Record<TypingStage, { icon: string; message: string }> = {
+  sending: { icon: '📤', message: 'Sending...' },
+  received: { icon: '✓', message: 'Message received...' },
+  thinking: { icon: '💭', message: 'Thinking...' },
+};
+
+export function TypingIndicator({ agentName, stage = 'received', onDismiss }: TypingIndicatorProps) {
+  const currentStage = stageConfig[stage];
 
   return (
     <div className="flex flex-col items-start group/typing">
@@ -25,9 +35,9 @@ export function TypingIndicator({ agentName, onDismiss }: TypingIndicatorProps) 
           </button>
         )}
         <div className="flex items-center gap-2">
-          <span className="text-base">✓</span>
+          <span className="text-base">{currentStage.icon}</span>
           <span className="text-sm text-muted-foreground italic">
-            Message received...
+            {currentStage.message}
           </span>
           <div className="flex gap-1 ml-1">
             <div

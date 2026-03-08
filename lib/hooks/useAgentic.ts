@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AgenticManager } from '../core/manager';
 import { AgentContext, AgentMessage } from '../core/types';
 import { useSSE } from './useSSE';
+import type { TypingStage } from '@/components/typing-indicator';
 
 let managerInstance: AgenticManager | null = null;
 
@@ -81,6 +82,8 @@ export function useAgentContext(contextId: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [isAgentTyping, setIsAgentTyping] = useState(false);
+  const [typingStage, setTypingStage] = useState<TypingStage>('received');
+  const [userMessageId, setUserMessageId] = useState<string | null>(null);
 
   // Load messages for the context
   const loadMessages = useCallback(async () => {
@@ -107,13 +110,17 @@ export function useAgentContext(contextId: string | null) {
       if (!contextId) return null;
 
       try {
-        // Show typing indicator immediately
+        // Stage 1: Sending (optional, happens very fast)
         setIsAgentTyping(true);
+        setTypingStage('sending');
 
         const message = await manager.sendMessage(contextId, content);
 
-        // Add message optimistically for immediate display
+        // Store user message ID to track when it appears in DB
         if (message) {
+          setUserMessageId(message.id);
+
+          // Add message optimistically for immediate display
           setMessages((prev) => {
             // Avoid duplicates
             if (prev.some((m) => m.id === message.id)) {
@@ -121,18 +128,23 @@ export function useAgentContext(contextId: string | null) {
             }
             return [...prev, message];
           });
+
+          // Stage 2: Message received (show immediately after send)
+          setTypingStage('received');
         }
 
         // Keep typing indicator for a bit to wait for agent response
         // It will be removed when agent message arrives via SSE
         setTimeout(() => {
           setIsAgentTyping(false);
+          setUserMessageId(null);
         }, 30000); // Max 30 seconds
 
         return message;
       } catch (err) {
         setError(err as Error);
         setIsAgentTyping(false);
+        setUserMessageId(null);
         return null;
       }
     },
@@ -180,9 +192,16 @@ export function useAgentContext(contextId: string | null) {
           return [...prev, newMessage];
         });
 
+        // Check if this is our user message appearing in DB
+        if (userMessageId && newMessage.id === userMessageId && newMessage.sender === 'user') {
+          // Stage 3: Message confirmed in database, now thinking
+          setTypingStage('thinking');
+        }
+
         // Hide typing indicator when agent message arrives
         if (newMessage.sender === 'agent') {
           setIsAgentTyping(false);
+          setUserMessageId(null);
         }
       }
     }
@@ -191,6 +210,7 @@ export function useAgentContext(contextId: string | null) {
   // Manual dismiss for typing indicator
   const dismissTypingIndicator = useCallback(() => {
     setIsAgentTyping(false);
+    setUserMessageId(null);
   }, []);
 
   return {
@@ -200,6 +220,7 @@ export function useAgentContext(contextId: string | null) {
     sendMessage,
     reload: loadMessages,
     isAgentTyping,
+    typingStage,
     dismissTypingIndicator,
   };
 }
