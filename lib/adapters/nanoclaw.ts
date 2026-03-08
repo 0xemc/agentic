@@ -38,7 +38,7 @@ export class NanoClawAdapter implements AgenticAdapter {
 
   constructor(config: NanoClawConfig) {
     this.config = {
-      pollInterval: 5000,
+      pollInterval: 2000, // Poll every 2 seconds for more responsive status updates
       databasePath: '/workspace/project/store/messages.db',
       ...config,
     };
