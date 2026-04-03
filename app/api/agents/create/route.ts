@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       if (existing) {
         db.close();
         return NextResponse.json(
-          { error: 'A group with this name already exists' },
+          { error: 'An agent with this name already exists' },
           { status: 409 }
         );
       }
@@ -70,11 +70,11 @@ export async function POST(request: NextRequest) {
       // Create initial CLAUDE.md
       const claudeMd = `# ${name}
 
-You are Barry, a personal assistant for the ${name} ${channelConfig.name} ${channel === 'web' ? 'context' : 'group'}.
+You are Barry, a personal assistant for ${name}.
 
 ## Context
 
-This is a ${channelConfig.name} ${channel === 'web' ? 'agent accessible via the web dashboard' : 'group'}. Follow the general instructions from the global CLAUDE.md.
+This agent runs on ${channelConfig.name}. Follow the general instructions from the global CLAUDE.md.
 
 ${channel === 'web' ? `
 ## Web Dashboard Access
@@ -84,7 +84,7 @@ This agent is accessible directly through the Agentic dashboard. Messages sent h
 
 ## Memory
 
-Use this file to remember important context about this ${channel === 'web' ? 'agent' : 'group'} and its users.
+Use this file to remember important context about this agent and its users.
 `;
 
       await fs.writeFile(path.join(groupFolderPath, 'CLAUDE.md'), claudeMd, 'utf-8');

@@ -128,7 +128,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to register group');
+        throw new Error(data.error || 'Failed to connect agent');
       }
 
       // Success!
@@ -143,7 +143,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
 
   const handleCreateNew = async () => {
     if (!newGroupName.trim()) {
-      setError('Group name is required');
+      setError('Agent name is required');
       return;
     }
 
@@ -163,7 +163,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create group');
+        throw new Error(data.error || 'Failed to create agent');
       }
 
       // Success!
@@ -180,13 +180,11 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>
-            {mode === 'select' ? 'Create New Agent' : 'Create New Group'}
-          </DialogTitle>
+          <DialogTitle>Create New Agent</DialogTitle>
           <DialogDescription>
             {mode === 'select'
-              ? 'Select an existing messaging group or create a new one'
-              : 'Configure a new agent group'}
+              ? 'Connect to an existing conversation, or create a new agent'
+              : 'Configure your new agent'}
           </DialogDescription>
         </DialogHeader>
 
@@ -198,7 +196,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search groups..."
+                    placeholder="Search conversations..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -220,7 +218,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
                   className="gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  New Group
+                  New Agent
                 </Button>
               </div>
 
@@ -274,11 +272,11 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
 
                   {filteredGroups.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
-                      <p>No groups found</p>
+                      <p>No conversations found</p>
                       {searchQuery ? (
                         <p className="text-sm mt-1">Try a different search term</p>
                       ) : (
-                        <p className="text-sm mt-1">Click "New Group" to create one</p>
+                        <p className="text-sm mt-1">Click "New Agent" to start fresh</p>
                       )}
                     </div>
                   )}
@@ -306,12 +304,12 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
               {/* Create New Group Form */}
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="groupName">Group Name</Label>
+                  <Label htmlFor="groupName">Agent Name</Label>
                   <Input
                     id="groupName"
                     value={newGroupName}
                     onChange={(e) => setNewGroupName(e.target.value)}
-                    placeholder="My New Agent"
+                    placeholder="My Agent"
                   />
                 </div>
 

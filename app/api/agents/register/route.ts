@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       if (existingJid) {
         db.close();
         return NextResponse.json(
-          { error: 'Group already registered' },
+          { error: 'This conversation is already connected to an agent' },
           { status: 409 }
         );
       }
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       if (existingFolder) {
         db.close();
         return NextResponse.json(
-          { error: 'A group with this name already exists' },
+          { error: 'An agent with this name already exists' },
           { status: 409 }
         );
       }
@@ -71,15 +71,15 @@ export async function POST(request: NextRequest) {
       // Create initial CLAUDE.md
       const claudeMd = `# ${name}
 
-You are Barry, a personal assistant for the ${name} ${channelConfig.name} group.
+You are Barry, a personal assistant for ${name}.
 
 ## Context
 
-This is a ${channelConfig.name} group. Follow the general instructions from the global CLAUDE.md.
+This agent is connected to a ${channelConfig.name} conversation. Follow the general instructions from the global CLAUDE.md.
 
 ## Memory
 
-Use this file to remember important context about this group and its members.
+Use this file to remember important context about this agent and its users.
 `;
 
       await fs.writeFile(path.join(groupFolderPath, 'CLAUDE.md'), claudeMd, 'utf-8');
