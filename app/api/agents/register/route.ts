@@ -81,7 +81,7 @@ Use this file to remember important context about this agent and its users.
         VALUES (?, ?, ?, ?, ?, ?)
       `);
 
-      stmt.run(jid, name, folder, trigger || null, addedAt, requiresTrigger);
+      stmt.run(jid, name, folder, trigger || '', addedAt, requiresTrigger);
 
       db.close();
 

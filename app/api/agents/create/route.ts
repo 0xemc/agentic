@@ -99,7 +99,7 @@ This is a web-based agent context. You can interact with it directly through the
         VALUES (?, ?, ?, ?, ?, ?)
       `);
 
-      stmt.run(jid, name, folder, trigger || null, addedAt, requiresTrigger);
+      stmt.run(jid, name, folder, trigger || '', addedAt, requiresTrigger);
 
       db.close();
 
