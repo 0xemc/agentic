@@ -146,33 +146,52 @@ export function AgentSidebar({
     }
   }, [isLoadingMore]);
 
-  // Handle resize
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
+  // Handle resize (mouse + touch)
+  const startResize = (clientX: number) => {
     setIsResizing(true);
-    startXRef.current = e.clientX;
+    startXRef.current = clientX;
     startWidthRef.current = width;
   };
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-      e.preventDefault();
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    startResize(e.clientX);
+  };
 
-      const delta = startXRef.current - e.clientX;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    startResize(e.touches[0].clientX);
+  };
+
+  useEffect(() => {
+    const applyDelta = (clientX: number) => {
+      const delta = startXRef.current - clientX;
       const minWidth = 350;
       const maxWidth = Math.floor(window.innerWidth * 0.9);
       const newWidth = Math.min(Math.max(minWidth, startWidthRef.current + delta), maxWidth);
       setWidth(newWidth);
     };
 
-    const handleMouseUp = () => {
-      setIsResizing(false);
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      e.preventDefault();
+      applyDelta(e.clientX);
     };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isResizing) return;
+      e.preventDefault();
+      applyDelta(e.touches[0].clientX);
+    };
+
+    const handleMouseUp = () => setIsResizing(false);
+    const handleTouchEnd = () => setIsResizing(false);
 
     if (isResizing) {
       document.addEventListener('mousemove', handleMouseMove, { passive: false });
       document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
       document.body.style.cursor = 'ew-resize';
       document.body.style.userSelect = 'none';
     }
@@ -180,6 +199,8 @@ export function AgentSidebar({
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
@@ -214,6 +235,7 @@ export function AgentSidebar({
         {/* Resize Handle - Desktop only */}
         <div
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
           className="absolute left-0 top-0 bottom-0 w-6 -ml-3 cursor-ew-resize z-[100] group items-center justify-center hidden lg:flex"
           style={{ touchAction: 'none' }}
         >
