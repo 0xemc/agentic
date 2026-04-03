@@ -46,21 +46,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Insert into registered_groups
-      const stmt = db.prepare(`
-        INSERT INTO registered_groups (jid, name, folder, trigger_pattern, added_at, requires_trigger)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `);
-
       const addedAt = new Date().toISOString();
       // If no trigger word provided, set requires_trigger to 0
       const requiresTrigger = !trigger || !trigger.trim() ? 0 : 1;
 
-      stmt.run(jid, name, folder, trigger || null, addedAt, requiresTrigger);
-
-      db.close();
-
-      // Create group folder
+      // Create folder structure BEFORE writing to DB so a disk error never
+      // leaves a dangling DB entry that blocks future retries.
       const groupsPath = process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups';
       const groupFolderPath = path.join(groupsPath, folder);
 
@@ -84,9 +75,19 @@ Use this file to remember important context about this agent and its users.
 
       await fs.writeFile(path.join(groupFolderPath, 'CLAUDE.md'), claudeMd, 'utf-8');
 
+      // Folder is ready — now register in DB
+      const stmt = db.prepare(`
+        INSERT INTO registered_groups (jid, name, folder, trigger_pattern, added_at, requires_trigger)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(jid, name, folder, trigger || null, addedAt, requiresTrigger);
+
+      db.close();
+
       return NextResponse.json({
         success: true,
-        group: {
+        agent: {
           jid,
           name,
           folder,
@@ -99,9 +100,9 @@ Use this file to remember important context about this agent and its users.
       throw error;
     }
   } catch (error) {
-    console.error('Error registering group:', error);
+    console.error('Error connecting agent:', error);
     return NextResponse.json(
-      { error: 'Failed to register group', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to connect agent', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

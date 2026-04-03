@@ -42,12 +42,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Insert into registered_groups
-      const stmt = db.prepare(`
-        INSERT INTO registered_groups (jid, name, folder, trigger_pattern, added_at, requires_trigger)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `);
-
       const addedAt = new Date().toISOString();
       // Determine if trigger is required:
       // - No trigger word provided = no trigger required
@@ -55,11 +49,8 @@ export async function POST(request: NextRequest) {
       // - Otherwise = trigger required
       const requiresTrigger = !trigger || !trigger.trim() || channel === 'web' ? 0 : 1;
 
-      stmt.run(jid, name, folder, trigger || null, addedAt, requiresTrigger);
-
-      db.close();
-
-      // Create group folder
+      // Create folder structure BEFORE writing to DB so a disk error never
+      // leaves a dangling DB entry that blocks future retries.
       const groupsPath = process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups';
       const groupFolderPath = path.join(groupsPath, folder);
 
@@ -102,6 +93,16 @@ This is a web-based agent context. You can interact with it directly through the
         await fs.writeFile(path.join(groupFolderPath, 'README.md'), readme, 'utf-8');
       }
 
+      // Folder is ready — now register in DB
+      const stmt = db.prepare(`
+        INSERT INTO registered_groups (jid, name, folder, trigger_pattern, added_at, requires_trigger)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(jid, name, folder, trigger || null, addedAt, requiresTrigger);
+
+      db.close();
+
       return NextResponse.json({
         success: true,
         group: {
@@ -121,7 +122,7 @@ This is a web-based agent context. You can interact with it directly through the
   } catch (error) {
     console.error('Error creating group:', error);
     return NextResponse.json(
-      { error: 'Failed to create group', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to create agent', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
