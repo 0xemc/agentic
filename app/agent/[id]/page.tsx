@@ -106,7 +106,7 @@ export default function AgentPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-[100dvh] bg-background">
       {/* Header */}
       <header className="border-b bg-background sticky top-0 z-10">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -191,7 +191,7 @@ export default function AgentPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t p-4 bg-background">
+      <div className="border-t p-4 bg-background" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
         <div className="flex gap-2">
           <input
             type="text"
