@@ -10,6 +10,17 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+// API routes (especially SSE streaming endpoints) must bypass the service
+// worker entirely. Serwist's caching strategies cannot handle streaming
+// responses — intercepting them causes onerror on the client side.
+// Register this BEFORE serwist.addEventListeners() so it takes priority.
+self.addEventListener('fetch', (event: FetchEvent) => {
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+  }
+});
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
