@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AgenticProvider } from "@/components/agentic-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SWRegister } from "@/components/sw-register";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +18,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Agentic - Mission Control",
   description: "Framework-agnostic dashboard for managing AI agents",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Agentic",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
@@ -26,6 +36,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#0f172a" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -37,6 +51,7 @@ export default function RootLayout({
           themes={['light', 'dark', 'system', 'ocean']}
         >
           <AgenticProvider>{children}</AgenticProvider>
+          <SWRegister />
         </ThemeProvider>
       </body>
     </html>
