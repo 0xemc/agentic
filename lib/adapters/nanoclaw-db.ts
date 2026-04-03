@@ -110,6 +110,14 @@ export class NanoClawDB {
     const timestamp = new Date().toISOString();
 
     try {
+      // Ensure the chat row exists before inserting the message.
+      // Web agents have synthetic JIDs that are never written to `chats` by the
+      // messaging platform, so we upsert here to satisfy the FK constraint.
+      this.db.prepare(`
+        INSERT OR IGNORE INTO chats (jid, name, last_message_time, channel, is_group)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(chatJid, null, timestamp, 'web', 0);
+
       const stmt = this.db.prepare(`
         INSERT INTO messages (id, chat_jid, sender, sender_name, content, timestamp, is_from_me, is_bot_message)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)

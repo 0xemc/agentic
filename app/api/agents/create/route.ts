@@ -93,7 +93,15 @@ This is a web-based agent context. You can interact with it directly through the
         await fs.writeFile(path.join(groupFolderPath, 'README.md'), readme, 'utf-8');
       }
 
-      // Folder is ready — now register in DB
+      // Folder is ready — now register in DB.
+      // Also ensure a chats row exists so the FK on messages.chat_jid is satisfied
+      // when the user sends their first message (web agents are never synced by the
+      // messaging platform, so no row would otherwise exist).
+      db.prepare(`
+        INSERT OR IGNORE INTO chats (jid, name, last_message_time, channel, is_group)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(jid, name, addedAt, channel, 0);
+
       const stmt = db.prepare(`
         INSERT INTO registered_groups (jid, name, folder, trigger_pattern, added_at, requires_trigger)
         VALUES (?, ?, ?, ?, ?, ?)
