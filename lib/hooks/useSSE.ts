@@ -55,7 +55,9 @@ export function useSSE({ url, onMessage, onError, enabled = true }: UseSSEOption
       if (onErrorRef.current) {
         onErrorRef.current(error);
       }
-      eventSource.close();
+      // Do NOT call eventSource.close() here — the native EventSource API
+      // handles automatic reconnection on errors. Closing it would permanently
+      // kill the connection with no way to recover.
     };
 
     return () => {

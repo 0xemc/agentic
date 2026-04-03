@@ -50,8 +50,13 @@ export async function GET(
 
       console.log(`[SSE] Watching database for context ${id} (JID: ${chatJid})`);
 
-      // Watch the database file for changes
-      const watcher = chokidar.watch(dbPath, {
+      // Track the last message ID we've sent to avoid re-sending on WAL checkpoints
+      let lastSentMessageId: string | null = null;
+
+      // In WAL mode, SQLite writes go to messages.db-wal, not messages.db.
+      // Watch the WAL file so we detect new writes immediately.
+      const walPath = `${dbPath}-wal`;
+      const watcher = chokidar.watch([dbPath, walPath], {
         persistent: true,
         ignoreInitial: true,
         awaitWriteFinish: {
@@ -71,6 +76,13 @@ export async function GET(
 
           if (messages.length > 0) {
             const latestMessage = messages[0];
+
+            // Skip if we already sent this message (avoids duplicate on WAL checkpoint)
+            if (latestMessage.id === lastSentMessageId) {
+              return;
+            }
+
+            lastSentMessageId = latestMessage.id;
             console.log(`[SSE] Sending new message to client:`, latestMessage.id);
 
             send({
