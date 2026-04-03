@@ -128,7 +128,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to connect agent');
+        throw new Error(data.details ? `${data.error}: ${data.details}` : (data.error || 'Failed to connect agent'));
       }
 
       // Success!
@@ -163,7 +163,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create agent');
+        throw new Error(data.details ? `${data.error}: ${data.details}` : (data.error || 'Failed to create agent'));
       }
 
       // Success!
