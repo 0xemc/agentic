@@ -111,7 +111,7 @@ export class APIAdapter implements AgenticAdapter {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         console.error('[APIAdapter] API error response:', errorData);
-        throw new Error(`API error: ${response.statusText}`);
+        throw new Error(errorData.details ? `${errorData.error}: ${errorData.details}` : (errorData.error || `API error: ${response.statusText}`));
       }
 
       const data = await response.json();
