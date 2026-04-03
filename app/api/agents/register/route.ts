@@ -7,7 +7,7 @@ import { detectChannelType, generateFolderName, getChannelConfig } from '@/lib/c
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { jid, name, trigger = '@Barry' } = body;
+    const { jid, name, trigger = '' } = body;
 
     if (!jid || !name) {
       return NextResponse.json(
@@ -26,12 +26,22 @@ export async function POST(request: NextRequest) {
     const db = new Database(dbPath);
 
     try {
-      // Check if already registered
-      const existing = db.prepare('SELECT * FROM registered_groups WHERE jid = ?').get(jid);
-      if (existing) {
+      // Check if already registered by JID
+      const existingJid = db.prepare('SELECT * FROM registered_groups WHERE jid = ?').get(jid);
+      if (existingJid) {
         db.close();
         return NextResponse.json(
           { error: 'Group already registered' },
+          { status: 409 }
+        );
+      }
+
+      // Check if folder name is already taken
+      const existingFolder = db.prepare('SELECT * FROM registered_groups WHERE folder = ?').get(folder);
+      if (existingFolder) {
+        db.close();
+        return NextResponse.json(
+          { error: 'A group with this name already exists' },
           { status: 409 }
         );
       }
@@ -54,13 +64,12 @@ export async function POST(request: NextRequest) {
       const groupsPath = process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups';
       const groupFolderPath = path.join(groupsPath, folder);
 
-      try {
-        await fs.mkdir(groupFolderPath, { recursive: true });
-        await fs.mkdir(path.join(groupFolderPath, 'logs'), { recursive: true });
-        await fs.mkdir(path.join(groupFolderPath, 'conversations'), { recursive: true });
+      await fs.mkdir(groupFolderPath, { recursive: true });
+      await fs.mkdir(path.join(groupFolderPath, 'logs'), { recursive: true });
+      await fs.mkdir(path.join(groupFolderPath, 'conversations'), { recursive: true });
 
-        // Create initial CLAUDE.md
-        const claudeMd = `# ${name}
+      // Create initial CLAUDE.md
+      const claudeMd = `# ${name}
 
 You are Barry, a personal assistant for the ${name} ${channelConfig.name} group.
 
@@ -73,11 +82,7 @@ This is a ${channelConfig.name} group. Follow the general instructions from the 
 Use this file to remember important context about this group and its members.
 `;
 
-        await fs.writeFile(path.join(groupFolderPath, 'CLAUDE.md'), claudeMd, 'utf-8');
-      } catch (err) {
-        console.error('Error creating group folder:', err);
-        // Non-fatal - continue even if folder creation fails
-      }
+      await fs.writeFile(path.join(groupFolderPath, 'CLAUDE.md'), claudeMd, 'utf-8');
 
       return NextResponse.json({
         success: true,

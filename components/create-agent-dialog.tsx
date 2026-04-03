@@ -42,7 +42,9 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
   // New group fields
   const [newGroupName, setNewGroupName] = useState('');
   const [selectedChannel, setSelectedChannel] = useState<ChannelType>('web');
-  const [trigger, setTrigger] = useState('');
+  // Separate trigger state per mode so switching doesn't bleed values across
+  const [registerTrigger, setRegisterTrigger] = useState('');
+  const [createTrigger, setCreateTrigger] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -88,6 +90,8 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
       setSelectedChannel('web');
       setSearchQuery('');
       setError(null);
+      setRegisterTrigger('');
+      setCreateTrigger('');
     }
   }, [open]);
 
@@ -118,7 +122,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
         body: JSON.stringify({
           jid: selectedGroup.jid,
           name: selectedGroup.name,
-          trigger,
+          trigger: registerTrigger,
         }),
       });
 
@@ -153,7 +157,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
         body: JSON.stringify({
           name: newGroupName,
           channel: selectedChannel,
-          trigger,
+          trigger: createTrigger,
         }),
       });
 
@@ -287,8 +291,8 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
                   <Label htmlFor="trigger">Trigger Word (optional)</Label>
                   <Input
                     id="trigger"
-                    value={trigger}
-                    onChange={(e) => setTrigger(e.target.value)}
+                    value={registerTrigger}
+                    onChange={(e) => setRegisterTrigger(e.target.value)}
                     placeholder="@Barry (leave empty to process all messages)"
                   />
                   <p className="text-xs text-muted-foreground">
@@ -344,8 +348,8 @@ export function CreateAgentDialog({ open, onOpenChange, onSuccess }: CreateAgent
                   <Label htmlFor="newTrigger">Trigger Word (optional)</Label>
                   <Input
                     id="newTrigger"
-                    value={trigger}
-                    onChange={(e) => setTrigger(e.target.value)}
+                    value={createTrigger}
+                    onChange={(e) => setCreateTrigger(e.target.value)}
                     placeholder="@Barry (leave empty to process all messages)"
                   />
                   <p className="text-xs text-muted-foreground">

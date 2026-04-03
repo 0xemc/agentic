@@ -4,7 +4,8 @@ import { detectChannelType, getChannelConfig } from '@/lib/core/channels';
 
 export async function GET() {
   try {
-    const availableGroupsPath = '/workspace/ipc/available_groups.json';
+    const ipcPath = process.env.NANOCLAW_IPC_PATH || '/workspace/ipc';
+    const availableGroupsPath = `${ipcPath}/available_groups.json`;
 
     try {
       const data = await fs.readFile(availableGroupsPath, 'utf-8');
@@ -49,7 +50,8 @@ export async function GET() {
 export async function POST() {
   try {
     // Trigger a refresh of available groups
-    const taskPath = `/workspace/ipc/tasks/refresh_${Date.now()}.json`;
+    const ipcPath = process.env.NANOCLAW_IPC_PATH || '/workspace/ipc';
+    const taskPath = `${ipcPath}/tasks/refresh_${Date.now()}.json`;
     await fs.writeFile(taskPath, JSON.stringify({ type: 'refresh_groups' }), 'utf-8');
 
     return NextResponse.json({ success: true, message: 'Refresh requested' });

@@ -10,7 +10,7 @@ import { generateFolderName, getChannelConfig, type ChannelType } from '@/lib/co
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, channel = 'web', trigger = '@Barry' } = body;
+    const { name, channel = 'web', trigger = '' } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -63,13 +63,12 @@ export async function POST(request: NextRequest) {
       const groupsPath = process.env.NANOCLAW_GROUPS_PATH || '/workspace/project/groups';
       const groupFolderPath = path.join(groupsPath, folder);
 
-      try {
-        await fs.mkdir(groupFolderPath, { recursive: true });
-        await fs.mkdir(path.join(groupFolderPath, 'logs'), { recursive: true });
-        await fs.mkdir(path.join(groupFolderPath, 'conversations'), { recursive: true });
+      await fs.mkdir(groupFolderPath, { recursive: true });
+      await fs.mkdir(path.join(groupFolderPath, 'logs'), { recursive: true });
+      await fs.mkdir(path.join(groupFolderPath, 'conversations'), { recursive: true });
 
-        // Create initial CLAUDE.md
-        const claudeMd = `# ${name}
+      // Create initial CLAUDE.md
+      const claudeMd = `# ${name}
 
 You are Barry, a personal assistant for the ${name} ${channelConfig.name} ${channel === 'web' ? 'context' : 'group'}.
 
@@ -88,11 +87,11 @@ This agent is accessible directly through the Agentic dashboard. Messages sent h
 Use this file to remember important context about this ${channel === 'web' ? 'agent' : 'group'} and its users.
 `;
 
-        await fs.writeFile(path.join(groupFolderPath, 'CLAUDE.md'), claudeMd, 'utf-8');
+      await fs.writeFile(path.join(groupFolderPath, 'CLAUDE.md'), claudeMd, 'utf-8');
 
-        // For web agents, create a welcome message
-        if (channel === 'web') {
-          const readme = `# ${name}
+      // For web agents, create a welcome message
+      if (channel === 'web') {
+        const readme = `# ${name}
 
 This is a web-based agent context. You can interact with it directly through the Agentic dashboard.
 
@@ -100,11 +99,7 @@ This is a web-based agent context. You can interact with it directly through the
 **Channel:** ${channelConfig.name}
 **Trigger:** ${requiresTrigger ? trigger : 'None (all messages processed)'}
 `;
-          await fs.writeFile(path.join(groupFolderPath, 'README.md'), readme, 'utf-8');
-        }
-      } catch (err) {
-        console.error('Error creating group folder:', err);
-        // Non-fatal - continue even if folder creation fails
+        await fs.writeFile(path.join(groupFolderPath, 'README.md'), readme, 'utf-8');
       }
 
       return NextResponse.json({
