@@ -1,10 +1,7 @@
-'use client';
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AgenticManager } from '../core/manager';
 import { AgentContext, AgentMessage } from '../core/types';
-import { useSSE } from './useSSE';
-import type { TypingStage } from '@/components/typing-indicator';
+import { usePolling } from './usePolling';
 
 let managerInstance: AgenticManager | null = null;
 
@@ -27,7 +24,6 @@ export function useAgentic() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Load all contexts
   const loadContexts = useCallback(async () => {
     try {
       setLoading(true);
@@ -50,31 +46,21 @@ export function useAgentic() {
           const updated = [...prev];
           updated[index] = context;
           return updated;
-        } else {
-          return [...prev, context];
         }
+        return [...prev, context];
       });
     });
-
     return unsubscribe;
   }, [manager]);
 
-  // Initial load
-  useEffect(() => {
-    loadContexts();
-  }, [loadContexts]);
+  useEffect(() => { loadContexts(); }, [loadContexts]);
 
-  return {
-    manager,
-    contexts,
-    loading,
-    error,
-    reload: loadContexts,
-  };
+  return { manager, contexts, loading, error, reload: loadContexts };
 }
 
 /**
- * Hook for interacting with a specific context
+ * Hook for interacting with a specific agent context.
+ * Uses polling instead of SSE since React Native has no native EventSource.
  */
 export function useAgentContext(contextId: string | null) {
   const manager = getAgenticManager();
@@ -82,21 +68,16 @@ export function useAgentContext(contextId: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [isAgentTyping, setIsAgentTyping] = useState(false);
-  const [typingStage, setTypingStage] = useState<TypingStage>('received');
-  const [userMessageId, setUserMessageId] = useState<string | null>(null);
+  const seenIdsRef = useRef(new Set<string>());
 
-  // Load messages for the context
   const loadMessages = useCallback(async () => {
-    if (!contextId) {
-      setMessages([]);
-      return;
-    }
-
+    if (!contextId) { setMessages([]); return; }
     try {
       setLoading(true);
       setError(null);
-      const contextMessages = await manager.getMessages(contextId);
-      setMessages(contextMessages);
+      const msgs = await manager.getMessages(contextId);
+      msgs.forEach(m => seenIdsRef.current.add(m.id));
+      setMessages(msgs);
     } catch (err) {
       setError(err as Error);
     } finally {
@@ -104,123 +85,61 @@ export function useAgentContext(contextId: string | null) {
     }
   }, [manager, contextId]);
 
-  // Send a message
-  const sendMessage = useCallback(
-    async (content: string) => {
-      if (!contextId) return null;
-
-      try {
-        // Stage 1: Sending (optional, happens very fast)
-        setIsAgentTyping(true);
-        setTypingStage('sending');
-
-        const message = await manager.sendMessage(contextId, content);
-
-        // Store user message ID to track when it appears in DB
-        if (message) {
-          setUserMessageId(message.id);
-
-          // Add message optimistically for immediate display
-          setMessages((prev) => {
-            // Avoid duplicates
-            if (prev.some((m) => m.id === message.id)) {
-              return prev;
-            }
-            return [...prev, message];
-          });
-
-          // Stage 2: Message received (show immediately after send)
-          setTypingStage('received');
-        }
-
-        // Keep typing indicator for a bit to wait for agent response
-        // It will be removed when agent message arrives via SSE
-        setTimeout(() => {
-          setIsAgentTyping(false);
-          setUserMessageId(null);
-        }, 30000); // Max 30 seconds
-
-        return message;
-      } catch (err) {
-        setError(err as Error);
-        setIsAgentTyping(false);
-        setUserMessageId(null);
-        return null;
+  const sendMessage = useCallback(async (content: string) => {
+    if (!contextId) return null;
+    try {
+      setIsAgentTyping(true);
+      const message = await manager.sendMessage(contextId, content);
+      if (message) {
+        seenIdsRef.current.add(message.id);
+        setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, message]);
       }
-    },
-    [manager, contextId]
-  );
-
-  // Subscribe to new messages
-  useEffect(() => {
-    const unsubscribe = manager.onMessage((message) => {
-      if (message.contextId === contextId) {
-        setMessages((prev) => {
-          // Avoid duplicates
-          if (prev.some((m) => m.id === message.id)) {
-            return prev;
-          }
-          return [...prev, message];
-        });
-      }
-    });
-
-    return unsubscribe;
+      // Typing indicator dismissed when agent response arrives via polling
+      setTimeout(() => setIsAgentTyping(false), 30000); // max 30s safety fallback
+      return message;
+    } catch (err) {
+      setError(err as Error);
+      setIsAgentTyping(false);
+      return null;
+    }
   }, [manager, contextId]);
 
-  // Load messages when context changes
+  // Subscribe to new messages from manager (e.g., from mock adapter callbacks)
   useEffect(() => {
-    loadMessages();
-  }, [loadMessages]);
-
-  // Subscribe to SSE for real-time updates
-  useSSE({
-    url: `/api/agents/${contextId}/stream`,
-    enabled: !!contextId,
-    onMessage: (data) => {
-      if (data.type === 'message') {
-        const newMessage = {
-          ...data.message,
-          timestamp: new Date(data.message.timestamp)
-        };
-
-        setMessages((prev) => {
-          // Avoid duplicates
-          if (prev.some((m) => m.id === newMessage.id)) {
-            return prev;
-          }
-          return [...prev, newMessage];
+    return manager.onMessage((message) => {
+      if (message.contextId === contextId) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === message.id)) return prev;
+          return [...prev, message];
         });
-
-        // Check if this is our user message appearing in DB
-        if (userMessageId && newMessage.id === userMessageId && newMessage.sender === 'user') {
-          // Stage 3: Message confirmed in database, now thinking
-          setTypingStage('thinking');
-        }
-
-        // Hide typing indicator when agent message arrives
-        if (newMessage.sender === 'agent') {
-          setIsAgentTyping(false);
-          setUserMessageId(null);
-        }
+        if (message.sender === 'agent') setIsAgentTyping(false);
       }
-    }
+    });
+  }, [manager, contextId]);
+
+  // Poll for new messages every 2 seconds
+  usePolling<{ messages: AgentMessage[] }>({
+    url: `/api/agents/${contextId}/messages`,
+    enabled: !!contextId,
+    interval: 2000,
+    onData: ({ messages: newMessages }) => {
+      setMessages(prev => {
+        let updated = [...prev];
+        let changed = false;
+        for (const msg of newMessages) {
+          if (!seenIdsRef.current.has(msg.id)) {
+            seenIdsRef.current.add(msg.id);
+            updated.push({ ...msg, timestamp: new Date(msg.timestamp) });
+            changed = true;
+            if (msg.sender === 'agent') setIsAgentTyping(false);
+          }
+        }
+        return changed ? updated : prev;
+      });
+    },
   });
 
-  // Manual dismiss for typing indicator
-  const dismissTypingIndicator = useCallback(() => {
-    setIsAgentTyping(false);
-    setUserMessageId(null);
-  }, []);
+  useEffect(() => { loadMessages(); }, [loadMessages]);
 
-  return {
-    messages,
-    loading,
-    error,
-    sendMessage,
-    reload: loadMessages,
-    isAgentTyping,
-    typingStage,
-    dismissTypingIndicator,
-  };
+  return { messages, loading, error, sendMessage, reload: loadMessages, isAgentTyping };
 }
