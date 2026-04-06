@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { AgentContext } from '@agentic/core/types';
 import { APIAdapter } from '@agentic/core/adapters/api';
 
-const api = new APIAdapter();
+const api = new APIAdapter(5000, process.env.EXPO_PUBLIC_API_URL ?? '');
 
 export default function AgentListScreen() {
   const router = useRouter();

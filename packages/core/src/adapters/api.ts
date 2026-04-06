@@ -13,8 +13,22 @@ export class APIAdapter implements AgenticAdapter {
   private contextUpdateCallbacks: Set<(context: AgentContext) => void> = new Set();
   private messageCallbacks: Set<(message: AgentMessage) => void> = new Set();
   private lastContexts: Map<string, AgentContext> = new Map();
+  private baseUrl: string;
 
-  constructor(private pollInterval = 5000) {}
+  /**
+   * @param pollInterval - polling interval in ms (0 to disable)
+   * @param baseUrl - base URL for API requests. Leave empty ('') for web (relative URLs).
+   *                  Required for React Native: e.g. 'http://192.168.1.10:3000'
+   *                  Can also be set via the EXPO_PUBLIC_API_URL environment variable.
+   */
+  constructor(private pollInterval = 5000, baseUrl?: string) {
+    // Priority: explicit arg > env var > '' (relative, works in browser)
+    this.baseUrl = (baseUrl ?? (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_API_URL) ?? '').replace(/\/$/, '');
+  }
+
+  private url(path: string): string {
+    return `${this.baseUrl}${path}`;
+  }
 
   async connect(): Promise<void> {
     this.connected = true;
@@ -39,7 +53,7 @@ export class APIAdapter implements AgenticAdapter {
     }
 
     try {
-      const response = await fetch('/api/agents');
+      const response = await fetch(this.url('/api/agents'));
       if (!response.ok) {
         throw new Error(`API error: ${response.statusText}`);
       }
@@ -69,7 +83,7 @@ export class APIAdapter implements AgenticAdapter {
     }
 
     try {
-      const response = await fetch(`/api/agents/${contextId}/messages`);
+      const response = await fetch(this.url(`/api/agents/${contextId}/messages`));
       if (!response.ok) {
         throw new Error(`API error: ${response.statusText}`);
       }
@@ -98,7 +112,7 @@ export class APIAdapter implements AgenticAdapter {
 
     try {
       console.log('[APIAdapter] Making POST request to:', `/api/agents/${contextId}/send`);
-      const response = await fetch(`/api/agents/${contextId}/send`, {
+      const response = await fetch(this.url(`/api/agents/${contextId}/send`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

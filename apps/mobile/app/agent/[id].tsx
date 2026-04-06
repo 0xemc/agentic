@@ -15,7 +15,8 @@ import { AgentMessage } from '@agentic/core/types';
 import { APIAdapter } from '@agentic/core/adapters/api';
 import { usePolling } from '@agentic/core/hooks';
 
-const api = new APIAdapter();
+const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? '';
+const api = new APIAdapter(5000, API_BASE);
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -46,7 +47,7 @@ export default function ChatScreen() {
 
   // Real-time polling (replaces SSE / EventSource)
   usePolling({
-    url: `/api/agents/${id}/messages`,
+    url: `${API_BASE}/api/agents/${id}/messages`,
     enabled: !!id,
     intervalMs: 2000,
     onMessage: (data: unknown) => {
