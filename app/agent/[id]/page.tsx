@@ -29,7 +29,8 @@ export default function AgentPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const previousScrollHeight = useRef<number>(0);
   const isInitialRender = useRef(true);
-  const lastKnownMessageId = useRef<string | null>(null);
+  const sessionStart = useRef(Date.now());
+  const lastStreamedId = useRef<string | null>(null);
 
   const { contexts } = useAgentic();
   const {
@@ -44,23 +45,26 @@ export default function AgentPage() {
   const displayMessages = messages.slice(-displayCount);
   const hasMore = messages.length > displayCount;
 
-  // Detect newly arrived agent messages
+  // Detect newly arrived agent messages — use timestamp to distinguish new vs historical
   useEffect(() => {
-    if (messages.length === 0) return;
-    const latest = messages[messages.length - 1];
-    if (latest.id === lastKnownMessageId.current) return;
+    const agentMessages = messages.filter((m) => m.sender === 'agent');
+    if (agentMessages.length === 0) return;
 
-    if (!isInitialRender.current && latest.sender === 'agent') {
+    const latest = agentMessages[agentMessages.length - 1];
+    if (latest.id === lastStreamedId.current) return;
+
+    const msgTime = latest.timestamp instanceof Date
+      ? latest.timestamp.getTime()
+      : new Date(latest.timestamp).getTime();
+
+    // Only stream if this message arrived after the page was opened
+    if (msgTime >= sessionStart.current) {
       setStreamingIds((prev) => new Set(prev).add(latest.id));
       setLatestAgentMessage(latest);
+      setPanelOpen(true);
     }
-    lastKnownMessageId.current = latest.id;
+    lastStreamedId.current = latest.id;
   }, [messages]);
-
-  // Auto-open panel when agent starts responding
-  useEffect(() => {
-    if (isAgentTyping) setPanelOpen(true);
-  }, [isAgentTyping]);
 
   // Auto-scroll to bottom
   useEffect(() => {
