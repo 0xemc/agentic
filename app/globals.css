@@ -221,6 +221,11 @@
   }
 }
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 /* Resizable sidebar - Desktop only */
 @media (min-width: 1024px) {
   [data-slot="sheet-content"][data-resizable="true"] {

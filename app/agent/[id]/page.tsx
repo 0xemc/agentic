@@ -4,9 +4,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAgentic, useAgentContext } from '@/lib/hooks/useAgentic';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MessageContent } from '@/components/message-content';
+import { StreamingMessage } from '@/components/streaming-message';
+import { TypingIndicator } from '@/components/typing-indicator';
 import { ArrowLeft } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect, useRef } from 'react';
@@ -18,56 +19,65 @@ export default function AgentPage() {
   const [input, setInput] = useState('');
   const [displayCount, setDisplayCount] = useState(20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Track IDs of messages that should animate (newly received this session)
+  const [streamingIds, setStreamingIds] = useState<Set<string>>(new Set());
+  // IDs whose animation has finished
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const previousScrollHeight = useRef<number>(0);
   const isInitialRender = useRef(true);
+  const lastKnownMessageId = useRef<string | null>(null);
 
   const { contexts } = useAgentic();
-  const { messages, sendMessage } = useAgentContext(agentId);
+  const {
+    messages,
+    sendMessage,
+    isAgentTyping,
+    typingStage,
+    dismissTypingIndicator,
+  } = useAgentContext(agentId);
 
   const agent = contexts.find((c) => c.id === agentId);
-
-  // Get messages to display (last N messages)
   const displayMessages = messages.slice(-displayCount);
   const hasMore = messages.length > displayCount;
 
-  // Auto-scroll to bottom when messages change or initially load
+  // Detect newly arrived agent messages and mark them for streaming animation
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const latest = messages[messages.length - 1];
+    if (latest.id === lastKnownMessageId.current) return;
+
+    if (!isInitialRender.current && latest.sender === 'agent') {
+      setStreamingIds((prev) => new Set(prev).add(latest.id));
+    }
+    lastKnownMessageId.current = latest.id;
+  }, [messages]);
+
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (messagesEndRef.current && !isLoadingMore) {
-      // Small delay to ensure DOM has updated with new message
       setTimeout(() => {
-        if (messagesEndRef.current) {
-          const scrollContainer = scrollContainerRef.current;
-
-          // Check if user is near the bottom (within 200px for more tolerance)
-          const isNearBottom = scrollContainer
-            ? scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 200
-            : true;
-
-          // Only auto-scroll if initial render or user is already near bottom
-          if (isInitialRender.current || isNearBottom) {
-            messagesEndRef.current.scrollIntoView({
-              behavior: isInitialRender.current ? 'instant' : 'smooth'
-            });
-          }
-
-          isInitialRender.current = false;
+        if (!messagesEndRef.current) return;
+        const scrollContainer = scrollContainerRef.current;
+        const isNearBottom = scrollContainer
+          ? scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 200
+          : true;
+        if (isInitialRender.current || isNearBottom) {
+          messagesEndRef.current.scrollIntoView({
+            behavior: isInitialRender.current ? 'instant' : 'smooth',
+          });
         }
+        isInitialRender.current = false;
       }, 0);
     }
   }, [messages, isLoadingMore]);
 
-  // Handle scroll to load more messages
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
-
-    // If user scrolls near the top, load more messages
     if (target.scrollTop < 100 && hasMore && !isLoadingMore) {
       setIsLoadingMore(true);
       previousScrollHeight.current = target.scrollHeight;
-
-      // Load 20 more messages
       setTimeout(() => {
         setDisplayCount((prev) => Math.min(prev + 20, messages.length));
         setIsLoadingMore(false);
@@ -75,12 +85,10 @@ export default function AgentPage() {
     }
   };
 
-  // Maintain scroll position after loading more messages
   useEffect(() => {
-    if (isLoadingMore === false && scrollContainerRef.current && previousScrollHeight.current > 0) {
+    if (!isLoadingMore && scrollContainerRef.current && previousScrollHeight.current > 0) {
       const newScrollHeight = scrollContainerRef.current.scrollHeight;
-      const scrollDiff = newScrollHeight - previousScrollHeight.current;
-      scrollContainerRef.current.scrollTop = scrollDiff;
+      scrollContainerRef.current.scrollTop = newScrollHeight - previousScrollHeight.current;
       previousScrollHeight.current = 0;
     }
   }, [isLoadingMore]);
@@ -97,9 +105,7 @@ export default function AgentPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground">Agent not found</p>
-          <Button onClick={() => router.push('/')} className="mt-4">
-            Back to Dashboard
-          </Button>
+          <Button onClick={() => router.push('/')} className="mt-4">Back to Dashboard</Button>
         </div>
       </div>
     );
@@ -110,11 +116,7 @@ export default function AgentPage() {
       {/* Header */}
       <header className="border-b bg-background sticky top-0 z-10">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push('/')}
-          >
+          <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <Avatar className="h-10 w-10">
@@ -148,9 +150,7 @@ export default function AgentPage() {
               <>
                 {isLoadingMore && (
                   <div className="text-center py-2">
-                    <p className="text-xs text-muted-foreground font-mono">
-                      Loading more messages...
-                    </p>
+                    <p className="text-xs text-muted-foreground font-mono">Loading more messages...</p>
                   </div>
                 )}
                 {hasMore && !isLoadingMore && (
@@ -160,29 +160,53 @@ export default function AgentPage() {
                     </p>
                   </div>
                 )}
-                {displayMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}
-                  >
-                    <span className="text-[9px] font-mono font-semibold uppercase tracking-wider mb-1 px-1 opacity-50">
-                      {message.sender === 'user' ? 'You' : agent.name}
-                    </span>
+
+                {displayMessages.map((message) => {
+                  const shouldStream = streamingIds.has(message.id) && !completedIds.has(message.id);
+
+                  return (
                     <div
-                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                        message.sender === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
+                      key={message.id}
+                      className={`flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}
                     >
-                      <MessageContent content={message.content} className="text-sm" />
-                      <span className="text-xs opacity-70 mt-1 block">
-                        {formatDistanceToNow(message.timestamp, { addSuffix: true })}
+                      <span className="text-[9px] font-mono font-semibold uppercase tracking-wider mb-1 px-1 opacity-50">
+                        {message.sender === 'user' ? 'You' : agent.name}
                       </span>
+                      <div
+                        className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                          message.sender === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        {message.sender === 'agent' ? (
+                          <StreamingMessage
+                            content={message.content}
+                            animate={shouldStream}
+                            onComplete={() =>
+                              setCompletedIds((prev) => new Set(prev).add(message.id))
+                            }
+                          />
+                        ) : (
+                          <MessageContent content={message.content} className="text-sm" />
+                        )}
+                        <span className="text-xs opacity-70 mt-1 block">
+                          {formatDistanceToNow(message.timestamp, { addSuffix: true })}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {/* Scroll anchor */}
+                  );
+                })}
+
+                {/* Live typing / thinking indicator */}
+                {isAgentTyping && (
+                  <TypingIndicator
+                    agentName={agent.name}
+                    stage={typingStage}
+                    onDismiss={dismissTypingIndicator}
+                  />
+                )}
+
                 <div ref={messagesEndRef} />
               </>
             )}
@@ -191,7 +215,10 @@ export default function AgentPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t p-4 bg-background" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+      <div
+        className="border-t p-4 bg-background"
+        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+      >
         <div className="flex gap-2">
           <input
             type="text"
